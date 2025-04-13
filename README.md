@@ -2,7 +2,7 @@
 
 A modern SaaS subscription starter template with Next.js, Supabase Auth, and Stripe integration.
 
-![Subscription Starter Banner](/screenshot.png)
+![Subscription Starter Banner](https://img.mytsi.org/i/z8GY981.png)
 
 ## Overview
 
