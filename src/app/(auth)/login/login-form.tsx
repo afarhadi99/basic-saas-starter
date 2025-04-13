@@ -39,8 +39,6 @@ export function LoginForm() {
       if (result?.error) {
         toast.error(result.error);
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Something went wrong');
     } finally {
       setIsLoading(false);
     }

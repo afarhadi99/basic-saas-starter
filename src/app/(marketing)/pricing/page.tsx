@@ -1,7 +1,5 @@
 // src/app/(marketing)/pricing/page.tsx
-import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
-import { formatPrice } from '@/lib/utils';
 import { PRICING_TIERS, getTierByPriceId } from '@/lib/config/pricing';
 import { PricingClient } from '@/components/pricing/pricing-client';
 

@@ -31,7 +31,7 @@ export default async function DashboardPage() {
           Welcome back, {profile?.full_name || 'Friend'}!
         </h1>
         <p className="text-muted-foreground">
-          This is your personal dashboard. Here's an overview of your account.
+          This is your personal dashboard. Here&apos;overview of your account.
         </p>
       </div>
       

@@ -1,5 +1,4 @@
 // src/app/(app)/premium/page.tsx
-import { createClient } from '@/lib/supabase/server';
 import { isUserSubscribed, getSubscriptionTier } from '@/lib/supabase/subscriptions';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
