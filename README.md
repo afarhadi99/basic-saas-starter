@@ -99,40 +99,331 @@ The project follows a modular structure using the Next.js App Router:
 ```
 /src
   /app
-    /(marketing) - Public pages (landing, pricing)
+    /(marketing) - Public marketing pages
       /page.tsx - Landing page
       /pricing/page.tsx - Pricing page
+      /layout.tsx - Layout for marketing pages
     /(auth) - Authentication pages
-      /login/page.tsx - Login page
-      /signup/page.tsx - Signup page
+      /login/
+        /page.tsx - Login page
+        /login-form.tsx - Login form component
+      /signup/
+        /page.tsx - Signup page
+        /signup-form.tsx - Signup form component
+      /layout.tsx - Layout for auth pages
       /auth/callback/route.ts - Auth callback handler
-    /(app) - Authenticated application pages
+    /(app) - Auth-protected application pages
       /dashboard/page.tsx - User dashboard
-      /account/page.tsx - Account settings
-      /premium/page.tsx - Premium content (subscription protected)
+      /account/
+        /page.tsx - Account settings page
+        /manage-subscription-button.tsx - Client component for subscription management
+        /update-profile-form.tsx - Client component for profile updates
+        /success-toast.tsx - Toast notification for successful payments
+      /premium/page.tsx - Subscription-protected content
+      /layout.tsx - Layout for app pages (includes auth check)
     /api - API routes
       /webhooks/stripe/route.ts - Stripe webhook handler
       /create-checkout-session/route.ts - Create checkout session endpoint
-      /create-customer-portal/route.ts - Create customer portal endpoint
+      /create-customer-portal/route.ts - Customer portal session endpoint
+      /check-session-status/route.ts - Check Stripe session status endpoint
   /components
     /ui - Shadcn UI components
-    /shared - Shared components (navbar, footer, etc.)
+    /account - Account-related components
+    /shared
+      /navbar.tsx - Navigation bar component
+      /footer.tsx - Footer component
+    /pricing
+      /pricing-client.tsx - Client component for pricing page
+    /checkout
+      /checkout-modal.tsx - Stripe checkout modal component
   /lib
+    /actions - Server actions
+      /auth.actions.ts - Authentication server actions
+      /stripe.actions.ts - Stripe server actions
     /supabase
-      /client.ts - Browser client
-      /server.ts - Server client
+      /client.ts - Browser Supabase client
+      /server.ts - Server Supabase client
       /middleware.ts - Auth middleware helper
       /admin.ts - Admin client with service role
-      /subscriptions.ts - Subscription helpers
+      /subscriptions.ts - Subscription helper functions
     /stripe
       /client.ts - Stripe initialization
-    /actions - Server actions
     /validators - Zod validation schemas
-    /config - Application configuration
-    /utils - Utility functions
+      /auth.ts - Authentication validators
+    /config
+      /pricing.ts - Pricing configuration
+    /utils.ts - Utility functions
+    /theme.ts - Theme configuration
   /middleware.ts - Next.js middleware for auth protection
-  /types - TypeScript type definitions
+  /types
+    /db_types.ts - Database and entity type definitions
 ```
+
+## Understanding Route Groups and Protection
+
+This project uses Next.js App Router with three main route groups:
+
+1. `(marketing)` - Public pages accessible to everyone
+2. `(auth)` - Authentication pages for login and signup
+3. `(app)` - Protected pages requiring authentication
+
+### How Auth Protection Works
+
+Auth protection is implemented at two levels:
+
+1. **Route Group Layout**: The `(app)/layout.tsx` file checks for authentication and redirects unauthenticated users to login:
+
+```tsx
+// src/app/(app)/layout.tsx
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    redirect('/login');
+  }
+  
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Navbar />
+      <main className="flex-1 pt-16 pb-8">
+        {children}
+      </main>
+    </div>
+  );
+}
+```
+
+2. **Middleware**: The `middleware.ts` file in the root directory provides an additional layer of protection:
+
+```typescript
+// src/middleware.ts
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.svg$).*)',
+  ],
+};
+```
+
+The `updateSession` function checks authentication and redirects accordingly:
+
+```typescript
+// src/lib/supabase/middleware.ts
+export async function updateSession(request: NextRequest) {
+  // ...
+  const protectedPaths = ['/dashboard', '/account', '/premium'];
+  const isProtectedPath = protectedPaths.some(path => 
+    request.nextUrl.pathname.startsWith(path)
+  );
+
+  // Redirect unauthenticated users from protected routes to login
+  if (!user && isProtectedPath) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/login';
+    redirectUrl.searchParams.set('from', request.nextUrl.pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
+  // ...
+}
+```
+
+## How to Add New Pages
+
+### Adding a Regular Auth-Protected Page
+
+To add a new page that requires authentication:
+
+1. Create a new file in the `(app)` route group:
+
+```tsx
+// src/app/(app)/new-page/page.tsx
+import { createClient } from '@/lib/supabase/server';
+
+export default async function NewPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // The (app) layout already ensures user is authenticated,
+  // so you can safely use the user object here
+  
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-4">New Page</h1>
+      <p>Welcome, {user.email}!</p>
+      {/* Your page content */}
+    </div>
+  );
+}
+```
+
+### Adding a Subscription-Protected Page
+
+To add a page that requires an active subscription:
+
+1. Create a new file in the `(app)` route group:
+
+```tsx
+// src/app/(app)/subscribers-only/page.tsx
+import { createClient } from '@/lib/supabase/server';
+import { isUserSubscribed } from '@/lib/supabase/subscriptions';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+
+export default async function SubscribersOnlyPage() {
+  const subscribed = await isUserSubscribed();
+  
+  // Show upgrade prompt if user isn't subscribed
+  if (!subscribed) {
+    return (
+      <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>Subscribers Only</CardTitle>
+            <CardDescription>
+              This content requires an active subscription
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-muted-foreground mb-4">
+              Upgrade your account to access this exclusive content.
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button asChild>
+              <Link href="/pricing">View Plans</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+  
+  // User is subscribed, show the content
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-4">Subscribers Only</h1>
+      <p className="mb-6">Thank you for subscribing! Here's your exclusive content:</p>
+      
+      {/* Your exclusive content */}
+      <div className="bg-primary/10 p-6 rounded-lg">
+        <h2 className="text-xl font-semibold mb-2">Premium Feature</h2>
+        <p>This is an example of premium content that only subscribers can see.</p>
+      </div>
+    </div>
+  );
+}
+```
+
+### Adding a Tier-Specific Protected Page
+
+To restrict content to specific subscription tiers (e.g., Business tier only):
+
+```tsx
+// src/app/(app)/business-features/page.tsx
+import { createClient } from '@/lib/supabase/server';
+import { getSubscriptionTier } from '@/lib/supabase/subscriptions';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+
+export default async function BusinessFeaturesPage() {
+  const tier = await getSubscriptionTier();
+  
+  // Only allow business tier users
+  if (tier !== 'business') {
+    return (
+      <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>Business Plan Required</CardTitle>
+            <CardDescription>
+              This content requires a Business plan subscription
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-muted-foreground mb-4">
+              Your current plan: {tier.toUpperCase()}
+            </p>
+            <p className="text-muted-foreground mb-4">
+              Upgrade to our Business plan to access these features.
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button asChild>
+              <Link href="/pricing">Upgrade Plan</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+  
+  // User has business tier, show the content
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-4">Business Features</h1>
+      <p className="mb-6">Welcome to the exclusive Business tier features!</p>
+      
+      {/* Business-specific content */}
+    </div>
+  );
+}
+```
+
+## Customizing the UI
+
+### Editing the Landing Page
+
+To modify the landing page, edit the `src/app/(marketing)/page.tsx` file. This page uses client components and contains the hero section, features section, and call-to-action.
+
+### Customizing the Pricing Page
+
+1. Update pricing tiers and plans in `src/lib/config/pricing.ts`:
+
+```typescript
+export const PRICING_TIERS: PricingTier[] = [
+  {
+    id: 'free',
+    name: 'Free',
+    description: 'Essential features for individuals',
+    features: [
+      'Basic dashboard access',
+      'Limited access to features',
+      'Community support',
+      // Add or modify features
+    ],
+    popular: false,
+    pricing: {
+      monthly: {
+        priceId: null,
+        amount: null,
+      },
+      yearly: {
+        priceId: null,
+        amount: null,
+      },
+    },
+  },
+  // Modify other tiers or add new ones
+];
+```
+
+2. Ensure you update the `STRIPE_PRICE_IDS` in the same file with your actual Stripe price IDs.
+
+3. The pricing page itself is in `src/app/(marketing)/pricing/page.tsx` and uses the client component `PricingClient` which you can customize.
+
+### Modifying the Dashboard
+
+Edit `src/app/(app)/dashboard/page.tsx` to change the dashboard layout, add new cards, or modify existing components.
 
 ## Setting up Supabase
 
@@ -343,4 +634,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Supabase](https://supabase.io/)
 - [Stripe](https://stripe.com/)
 - [Shadcn UI](https://ui.shadcn.com/)
-
