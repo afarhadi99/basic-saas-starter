@@ -18,7 +18,6 @@ This project leverages modern technologies for a performant and developer-friend
 - **UI Components**: [Shadcn UI](https://ui.shadcn.com/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Toast Notifications**: [Sonner](https://sonner.emilkowal.ski/)
 - **Form Handling**: [React Hook Form](https://react-hook-form.com/) with [Zod](https://zod.dev/) validation
 
 ## Features
