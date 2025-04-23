@@ -277,6 +277,52 @@ export interface Database {
           }
         ]
       }
+      generated_media: {
+        Row: {
+          id: string
+          user_id: string
+          prompt: string
+          media_type: string
+          media_url: string
+          storage_path: string
+          credits_used: number
+          status: string
+          created_at: string
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          prompt: string
+          media_type: string
+          media_url: string
+          storage_path: string
+          credits_used: number
+          status?: string
+          created_at?: string
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          prompt?: string
+          media_type?: string
+          media_url?: string
+          storage_path?: string
+          credits_used?: number
+          status?: string
+          created_at?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_media_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -295,7 +341,7 @@ export interface Database {
   }
 }
 
-export type User = Database["public"]["Tables"]["users"]["Row"] 
+export type User = Database["public"]["Tables"]["users"]["Row"]
 export type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"] & {
   prices?: Price
 }
@@ -306,3 +352,4 @@ export type Price = Database["public"]["Tables"]["prices"]["Row"] & {
 export type Customer = Database["public"]["Tables"]["customers"]["Row"]
 export type CreditPurchase = Database["public"]["Tables"]["credit_purchases"]["Row"]
 export type CreditUsage = Database["public"]["Tables"]["credit_usage"]["Row"]
+export type GeneratedMedia = Database["public"]["Tables"]["generated_media"]["Row"]

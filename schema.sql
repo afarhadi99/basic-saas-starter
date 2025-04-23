@@ -124,3 +124,19 @@ CREATE TABLE public.credit_usage (
 );
 ALTER TABLE public.credit_usage ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Can view own credit usage" ON public.credit_usage FOR SELECT USING (auth.uid() = user_id);
+
+-- Table for storing generated media
+CREATE TABLE public.generated_media (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  prompt TEXT NOT NULL,
+  media_type TEXT NOT NULL CHECK (media_type IN ('image', 'video')),
+  media_url TEXT NOT NULL,
+  storage_path TEXT NOT NULL,
+  credits_used INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+ALTER TABLE public.generated_media ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Can view own media" ON public.generated_media FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Can insert own media" ON public.generated_media FOR INSERT WITH CHECK (auth.uid() = user_id);

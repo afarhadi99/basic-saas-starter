@@ -852,6 +852,115 @@ If users report issues with credits not being added after purchase:
 | `STRIPE_WEBHOOK_SECRET` | Your Stripe webhook signing secret | `whsec_123456789` |
 | `NEXT_PUBLIC_SITE_URL` | Your application URL | `http://localhost:3000` |
 
+
+## Adding Pixio API Deployments and Modalities
+
+The application supports generating different types of media (modalities) using ComfyUI deployments. This section explains how to add new modalities.
+
+### Understanding Deployments and Modalities
+
+- **Deployment**: A specific ComfyUI workflow with a unique ID
+- **Modality**: A type of media that can be generated (image, video, etc.)
+- **Credit Cost**: Each modality costs a different amount of credits to generate
+
+### Setting Up New ComfyUI Deployments
+
+1. **Create a ComfyUI Workflow**:
+   - Design your workflow for the specific generation task
+   - Test thoroughly to ensure it produces the expected output
+
+2. **Deploy to ComfyDeploy**:
+   - Upload your workflow to ComfyDeploy 
+   - Note the deployment ID assigned to your workflow
+
+3. **Update Application Configuration**:
+   - Add the deployment ID to the constants file
+
+### Adding a New Modality
+
+To add a new modality (e.g., audio, 3D model):
+
+1. **Update Media Constants** (`src/lib/constants/media.ts`):
+
+   ```typescript
+   export const MEDIA_TYPES = ['image', 'video', 'audio'] as const;
+   
+   export const DEPLOYMENT_IDS = {
+     image: '8f96cb86-5cbb-4ad0-9837-8a79eeb5103a',
+     video: 'd07cf1d5-412c-4270-b925-ffd6416abd1c',
+     audio: 'your-new-deployment-id'
+   } as const;
+   
+   export const CREDIT_COSTS = {
+     image: 10,
+     video: 100,
+     audio: 50  // Set appropriate credit cost
+   } as const;
+   ```
+
+2. **Update Database Schema**:
+
+   ```sql
+   -- Update the check constraint for media_type
+   ALTER TABLE public.generated_media 
+   DROP CONSTRAINT generated_media_media_type_check,
+   ADD CONSTRAINT generated_media_media_type_check 
+   CHECK (media_type IN ('image', 'video', 'audio'));
+   ```
+
+3. **Create UI Components**:
+   - Create a generation form component like `audio-generation-form.tsx`
+   - Add a tab in the dashboard UI
+   - Create preview components for the new media type
+
+4. **Update Media Service**:
+   - Add file extension handling:
+     ```typescript
+     const fileExtension = mediaRecord.media_type === 'image' ? '.png' : 
+                         mediaRecord.media_type === 'video' ? '.webp' : 
+                         mediaRecord.media_type === 'audio' ? '.mp3' : '.bin';
+     ```
+   - Add content type handling:
+     ```typescript
+     const contentType = mediaRecord.media_type === 'image' ? 'image/png' : 
+                       mediaRecord.media_type === 'video' ? 'video/webm' : 
+                       mediaRecord.media_type === 'audio' ? 'audio/mpeg' : 'application/octet-stream';
+     ```
+
+5. **Add Media Display Components**:
+   - Update the media library to display the new type properly
+   - Create appropriate player/viewer components
+
+### Credit Management for Different Modalities
+
+Credit costs should be set based on the computational resources required:
+
+| Modality | Default Cost | Notes |
+|----------|--------------|-------|
+| Image    | 10 credits   | Standard image generation |
+| Video    | 100 credits  | More resource-intensive |
+| Audio    | 50 credits   | Example cost for audio generation |
+| 3D Model | 150 credits  | Example cost for 3D generation |
+
+### Example: Complete Implementation
+
+For a complete example, see how the image and video modalities are implemented:
+
+- Constants in `src/lib/constants/media.ts`
+- Generation forms in `components/dashboard`
+- Media service handling in `lib/services/media.service.ts`
+- Dashboard UI in `app/(app)/dashboard/page.tsx`
+
+### Troubleshooting New Modalities
+
+If your new modality isn't working:
+
+1. Verify your deployment ID is correct
+2. Check the ComfyUI output URL pattern matches your code
+3. Test direct API calls to your deployment 
+4. Ensure proper content types for storage uploads
+5. Check browser console for UI errors
+
 ## Deployment
 
 ### Deploying to Vercel
@@ -866,9 +975,7 @@ After deployment, update your Supabase and Stripe configurations with your produ
 2. Update the webhook endpoint URL in Stripe
 3. Update the `NEXT_PUBLIC_SITE_URL` environment variable
 
-## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
