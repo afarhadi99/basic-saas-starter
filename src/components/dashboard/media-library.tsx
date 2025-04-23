@@ -5,11 +5,12 @@ import { useState, useEffect } from 'react';
 import { fetchUserMedia } from '@/lib/actions/media.actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { ImageIcon, VideoIcon, Loader2, Calendar } from 'lucide-react';
+import { ImageIcon, VideoIcon, Loader2, Calendar, Download, Copy, Check } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { GeneratedMedia } from '@/types/db_types';
 import { MediaType } from '@/lib/constants/media';
+import { Button } from '@/components/ui/button';
 
 interface MediaLibraryProps {
   refreshTrigger?: number;
@@ -115,7 +116,55 @@ interface MediaCardProps {
 
 function MediaCard({ item }: MediaCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const formattedDate = new Date(item.created_at).toLocaleDateString();
+  
+  // Function to download media
+  const downloadMedia = async () => {
+    try {
+      const response = await fetch(item.media_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      
+      // Set file name with appropriate extension
+      const extension = item.media_type === 'image' ? '.png' : '.webp';
+      a.download = `${item.media_type}-${Date.now()}${extension}`;
+      
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success(`${item.media_type} downloaded successfully`);
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download file');
+    }
+  };
+  
+  // Function to copy prompt to clipboard
+  const copyPrompt = () => {
+    navigator.clipboard.writeText(item.prompt)
+      .then(() => {
+        setIsCopied(true);
+        toast.success('Prompt copied to clipboard');
+        
+        // Reset copy state after 2 seconds
+        setTimeout(() => {
+          setIsCopied(false);
+        }, 2000);
+      })
+      .catch((error) => {
+        console.error('Failed to copy:', error);
+        toast.error('Failed to copy prompt');
+      });
+  };
   
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
@@ -123,22 +172,16 @@ function MediaCard({ item }: MediaCardProps) {
         className="relative aspect-square overflow-hidden bg-secondary/20 cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        {item.media_type === 'image' ? (
-          <Image
-            src={item.media_url}
-            alt={item.prompt || 'Generated image'}
-            fill
-            className="object-cover"
-          />
-        ) : (
-            <Image
-            src={item.media_url}
-            alt={item.prompt || 'Generated image'}
-            fill
-            className="object-cover"
-          />
-        )}
+        {/* Media display - both image and video are displayed as images based on current implementation */}
+        <Image
+          src={item.media_url}
+          alt={item.prompt || 'Generated media'}
+          fill
+          className="object-cover"
+          unoptimized={true}
+        />
         
+        {/* Media type badge */}
         <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-md px-2 py-1 text-xs font-medium flex items-center gap-1">
           {item.media_type === 'image' ? (
             <>
@@ -155,12 +198,45 @@ function MediaCard({ item }: MediaCardProps) {
       </div>
       
       <CardContent className="p-3">
+        {/* Prompt text with date */}
         <p className="text-xs text-muted-foreground line-clamp-2" title={item.prompt}>
           {item.prompt}
         </p>
-        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-          <Calendar className="h-3 w-3" />
-          <span>{formattedDate}</span>
+        <div className="flex items-center justify-between mt-2">
+          {/* Date */}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            <span>{formattedDate}</span>
+          </div>
+          
+          {/* Action buttons - moved here from the media preview */}
+          <div className="flex gap-2">
+            {/* Download button */}
+            <Button 
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={downloadMedia}
+              title="Download media"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            
+            {/* Copy prompt button */}
+            <Button 
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={copyPrompt}
+              title="Copy prompt"
+            >
+              {isCopied ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
