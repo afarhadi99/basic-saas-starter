@@ -182,6 +182,9 @@ export interface Database {
           full_name: string | null
           id: string
           payment_method: Json | null
+          subscription_credits: number | null
+          purchased_credits: number | null
+          last_credits_reset_date: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -189,6 +192,9 @@ export interface Database {
           full_name?: string | null
           id: string
           payment_method?: Json | null
+          subscription_credits?: number | null
+          purchased_credits?: number | null
+          last_credits_reset_date?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -196,11 +202,76 @@ export interface Database {
           full_name?: string | null
           id?: string
           payment_method?: Json | null
+          subscription_credits?: number | null
+          purchased_credits?: number | null
+          last_credits_reset_date?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "users_id_fkey"
             columns: ["id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      credit_purchases: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          price_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          amount: number
+          price_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          amount?: number
+          price_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_purchases_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      credit_usage: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          description: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          amount: number
+          description?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          amount?: number
+          description?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_usage_user_id_fkey"
+            columns: ["user_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]
           }
@@ -224,7 +295,7 @@ export interface Database {
   }
 }
 
-export type User = Database["public"]["Tables"]["users"]["Row"]
+export type User = Database["public"]["Tables"]["users"]["Row"] 
 export type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"] & {
   prices?: Price
 }
@@ -233,3 +304,5 @@ export type Price = Database["public"]["Tables"]["prices"]["Row"] & {
   products?: Product
 }
 export type Customer = Database["public"]["Tables"]["customers"]["Row"]
+export type CreditPurchase = Database["public"]["Tables"]["credit_purchases"]["Row"]
+export type CreditUsage = Database["public"]["Tables"]["credit_usage"]["Row"]

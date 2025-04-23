@@ -598,6 +598,248 @@ To test webhooks locally:
    ```
 4. The CLI will output a webhook signing secret. Add this to your `.env.local` file as `STRIPE_WEBHOOK_SECRET`
 
+## Credit System
+
+This project includes a robust credit system that allows users to consume credits for various actions. Each subscription tier includes a monthly allocation of credits, and users can purchase additional credit packs.
+
+### How the Credit System Works
+
+- **Tier-Based Credits**: Each subscription tier (free, pro, business) comes with a monthly allocation of credits
+- **Credit Refresh**: Credits are automatically refreshed when subscriptions renew
+- **Two Credit Types**: 
+  - **Subscription Credits**: Reset monthly based on the user's subscription tier
+  - **Purchased Credits**: Never expire and accumulate as users buy credit packs
+- **Credit Usage**: When users consume credits, subscription credits are used first before purchased credits
+
+### Setting Up the Credit System
+
+#### 1. Database Schema
+
+Add these fields to your database schema by running the following SQL in the Supabase SQL Editor:
+
+```sql
+-- Add credit-related fields to users table
+ALTER TABLE public.users 
+ADD COLUMN subscription_credits INTEGER DEFAULT 0,
+ADD COLUMN purchased_credits INTEGER DEFAULT 0,
+ADD COLUMN last_credits_reset_date TIMESTAMP WITH TIME ZONE;
+
+-- Create table for credit purchases
+CREATE TABLE public.credit_purchases (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  price_id TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+ALTER TABLE public.credit_purchases ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Can view own credit purchases" ON public.credit_purchases FOR SELECT USING (auth.uid() = user_id);
+
+-- Create table for credit usage
+CREATE TABLE public.credit_usage (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+ALTER TABLE public.credit_usage ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Can view own credit usage" ON public.credit_usage FOR SELECT USING (auth.uid() = user_id);
+```
+
+#### 2. Configure Credit Amounts per Tier
+
+Update your pricing configuration in `src/lib/config/pricing.ts` to include credit amounts:
+
+```typescript
+export const PRICING_TIERS: PricingTier[] = [
+  {
+    id: 'free',
+    name: 'Free',
+    description: 'Essential features for individuals',
+    credits: 500, // 500 credits per month for free tier
+    features: [
+      'Basic dashboard access',
+      'Limited access to features',
+      'Community support',
+      '500 credits per month',
+    ],
+    // ...other pricing details
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    description: 'Perfect for professionals',
+    credits: 3000, // 3000 credits per month for pro tier
+    features: [
+      'Everything in Free',
+      'Advanced features',
+      'Priority support',
+      'Extended usage limits',
+      '3000 credits per month',
+    ],
+    // ...other pricing details
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    description: 'For teams and organizations',
+    credits: 6000, // 6000 credits per month for business tier
+    features: [
+      'Everything in Pro',
+      'Enterprise features',
+      'Dedicated support',
+      'Custom integrations',
+      'Team management',
+      '6000 credits per month',
+    ],
+    // ...other pricing details
+  },
+];
+```
+
+#### 3. Set Up Credit Packs in Stripe
+
+1. **Create One-Time Products in Stripe**:
+   - Log in to your [Stripe Dashboard](https://dashboard.stripe.com/)
+   - Go to Products > Add Product
+   - Create credit pack products (e.g., "1000 Credits", "2500 Credits", "5000 Credits")
+   - For each product, add a one-time price (not recurring)
+   - Set the appropriate prices (e.g., $10 for 1000 credits, $25 for 2500 credits, $50 for 5000 credits)
+   - Note the Price IDs for each credit pack
+
+2. **Add Price IDs to Environment Variables**:
+   Add these to your `.env.local` file:
+
+   ```
+   NEXT_PUBLIC_STRIPE_PRICE_CREDIT_PACK_1000=price_your_1000_credits_price_id
+   NEXT_PUBLIC_STRIPE_PRICE_CREDIT_PACK_2500=price_your_2500_credits_price_id
+   NEXT_PUBLIC_STRIPE_PRICE_CREDIT_PACK_5000=price_your_5000_credits_price_id
+   ```
+
+3. **Configure Credit Packs in the Code**:
+   The credit packs are defined in `src/lib/config/pricing.ts`:
+
+   ```typescript
+   export const CREDIT_PACKS = [
+     {
+       id: 'credits-1000',
+       name: '1000 Credits',
+       description: 'Top up with a small credit pack',
+       amount: 1000,
+       price: 1000, // $10 in cents
+       priceId: STRIPE_PRICE_IDS.CREDIT_PACK_1000,
+     },
+     {
+       id: 'credits-2500',
+       name: '2500 Credits',
+       description: 'Best value for regular users',
+       amount: 2500,
+       price: 2500, // $25 in cents
+       priceId: STRIPE_PRICE_IDS.CREDIT_PACK_2500,
+     },
+     {
+       id: 'credits-5000',
+       name: '5000 Credits',
+       description: 'Best value for power users',
+       amount: 5000,
+       price: 5000, // $50 in cents
+       priceId: STRIPE_PRICE_IDS.CREDIT_PACK_5000,
+     }
+   ];
+   ```
+
+### Using the Credit System
+
+#### Displaying Credits
+
+The user's credits are displayed in the navigation bar for easy reference. The total shown combines both subscription and purchased credits.
+
+#### Managing Credits
+
+The account page includes a dedicated credits section where users can:
+- View their current subscription credits
+- View their purchased credits
+- See their recent credit usage history
+- Purchase additional credit packs
+
+#### Programmatically Using Credits
+
+Use the provided functions to manage credits in your application:
+
+```typescript
+import { useCredits, getUserCredits } from '@/lib/credits';
+
+// To use credits in a server component:
+export default async function MyServerComponent() {
+  // Get user's current credits
+  const { subscriptionCredits, purchasedCredits, total } = await getUserCredits();
+  
+  // Render component with credit information
+  return (
+    <div>
+      <p>You have {total} credits available</p>
+    </div>
+  );
+}
+
+// To consume credits in a server action:
+export async function myServerAction() {
+  const userId = '...'; // Get the user ID
+  const amount = 50; // Number of credits to use
+  const description = 'Generated AI image'; // What the credits were used for
+  
+  // Attempt to use credits
+  const success = await useCredits(userId, amount, description);
+  
+  if (success) {
+    // Credits were successfully used, perform the action
+    return { success: true };
+  } else {
+    // Not enough credits
+    return { error: 'Not enough credits' };
+  }
+}
+```
+
+### Credit System Behavior
+
+1. **New User Credits**: When a user signs up, they automatically receive the free tier's credit allocation (500 by default).
+
+2. **Subscription Upgrade**: When a user upgrades their subscription, their subscription credits are immediately updated to the new tier's allocation.
+
+3. **Monthly Refresh**: Subscription credits are automatically refreshed to the tier's allocation amount when:
+   - The subscription renews (monthly/yearly billing cycle)
+   - The subscription status changes to active or trialing
+   - The user changes subscription plans
+
+4. **Credit Usage Priority**: When credits are consumed, the system first uses subscription credits before touching purchased credits.
+
+5. **Credit Pack Purchase**: When a user purchases a credit pack:
+   - The credits are immediately added to their purchased credits balance
+   - A record is created in the `credit_purchases` table
+   - These credits never expire
+
+### Troubleshooting the Credit System
+
+If users report issues with credits not being added after purchase:
+
+1. **Check Stripe Webhooks**: Ensure the webhook endpoint is correctly set up and receiving events.
+
+2. **Verify Webhook Signatures**: Make sure your `STRIPE_WEBHOOK_SECRET` environment variable is correct.
+
+3. **Check Logs**: Look for error messages in your logs when credit purchases are attempted.
+
+4. **Test Webhook Manually**: You can trigger test webhook events from the Stripe dashboard.
+
+5. **Manually Add Credits**: If needed, you can manually add credits using the Supabase SQL Editor:
+
+   ```sql
+   UPDATE public.users
+   SET purchased_credits = purchased_credits + 1000
+   WHERE id = 'user-uuid-here';
+   ```
+
 ## Environment Variables
 
 | Variable | Description | Example |

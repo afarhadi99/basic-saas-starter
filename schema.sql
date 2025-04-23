@@ -96,3 +96,31 @@ CREATE TABLE public.subscriptions (
 );
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Can view own subscription data." ON public.subscriptions FOR SELECT USING (auth.uid() = user_id);
+
+-- Add credit-related fields to users table
+ALTER TABLE public.users 
+ADD COLUMN subscription_credits INTEGER DEFAULT 0,
+ADD COLUMN purchased_credits INTEGER DEFAULT 0,
+ADD COLUMN last_credits_reset_date TIMESTAMP WITH TIME ZONE;
+
+-- Create table for credit purchases
+CREATE TABLE public.credit_purchases (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  price_id TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+ALTER TABLE public.credit_purchases ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Can view own credit purchases" ON public.credit_purchases FOR SELECT USING (auth.uid() = user_id);
+
+-- Create table for credit usage
+CREATE TABLE public.credit_usage (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+ALTER TABLE public.credit_usage ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Can view own credit usage" ON public.credit_usage FOR SELECT USING (auth.uid() = user_id);

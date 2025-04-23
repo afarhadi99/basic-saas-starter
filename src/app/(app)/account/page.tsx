@@ -11,6 +11,9 @@ import Link from 'next/link';
 import { UpdateProfileForm } from '@/components/account/update-profile-form';
 import { SuccessToastWrapper } from '@/components/account/success-toast';
 import { ManageSubscriptionButton } from '@/components/account/manage-subscription-button';
+import { getUserCredits } from '@/lib/credits';
+import { CREDIT_PACKS } from '@/lib/config/pricing';
+import { CreditPackCard } from '@/components/account/credit-pack-card';
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -29,6 +32,17 @@ export default async function AccountPage() {
     .single();
   
   const subscription = await getUserSubscription();
+  
+  // Get user credits
+  const userCredits = await getUserCredits();
+  
+  // Get credit usage history
+  const { data: creditUsage } = await supabase
+    .from('credit_usage')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -54,6 +68,73 @@ export default async function AccountPage() {
             </CardHeader>
             <CardContent>
               <UpdateProfileForm profile={profile} />
+            </CardContent>
+          </Card>
+          
+          {/* NEW: Credits Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Credits</CardTitle>
+              <CardDescription>
+                Manage your credits for using premium features
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium">Total Credits</h3>
+                  <p className="text-2xl font-bold">{userCredits.total.toLocaleString()}</p>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-medium">Subscription Credits</h3>
+                  <p className="text-lg">{userCredits.subscriptionCredits.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">Refreshes monthly based on your plan</p>
+                </div>
+                <div>
+                  <h3 className="font-medium">Purchased Credits</h3>
+                  <p className="text-lg">{userCredits.purchasedCredits.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">Never expires</p>
+                </div>
+              </div>
+              
+              {creditUsage && creditUsage.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="font-medium mb-2">Recent Usage</h3>
+                    <div className="space-y-2">
+                      {creditUsage.map((usage) => (
+                        <div key={usage.id} className="flex justify-between items-center text-sm">
+                          <span>{usage.description || 'Credit usage'}</span>
+                          <span className="font-medium text-destructive">-{usage.amount}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* NEW: Purchase Credits Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Purchase Credits</CardTitle>
+              <CardDescription>
+                Need more credits? Purchase additional credit packs
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-3 gap-4">
+                {CREDIT_PACKS.map((pack) => (
+                  <CreditPackCard key={pack.id} creditPack={pack} />
+                ))}
+              </div>
             </CardContent>
           </Card>
           
@@ -124,7 +205,6 @@ export default async function AccountPage() {
                       <p className="capitalize">{subscription.status}</p>
                     </div>
                   </div>
-                  
                   
                   {/* Client component for handling subscription management */}
                   <ManageSubscriptionButton />

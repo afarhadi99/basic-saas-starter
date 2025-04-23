@@ -7,7 +7,10 @@ import {
   upsertProductRecord,
   upsertPriceRecord,
   manageSubscriptionStatusChange,
+  supabaseAdmin
 } from '@/lib/supabase/admin';
+import { addPurchasedCredits, resetSubscriptionCredits } from '@/lib/credits';
+import { getTierByPriceId } from '@/lib/config/pricing';
 
 export async function POST(req: Request) {
   try {
@@ -67,6 +70,36 @@ export async function POST(req: Request) {
             break;
           case 'checkout.session.completed':
             const checkoutSession = event.data.object as Stripe.Checkout.Session;
+            
+            // Handle credit purchases
+            if (checkoutSession.mode === 'payment' && checkoutSession.metadata?.type === 'credit_purchase') {
+              const userId = checkoutSession.metadata.userId;
+              const creditAmount = parseInt(checkoutSession.metadata.creditAmount || '0', 10);
+              
+              if (userId && creditAmount > 0) {
+                console.log(`Adding ${creditAmount} purchased credits for user ${userId}`);
+                
+                try {
+                  // Add purchased credits
+                  await addPurchasedCredits(userId, creditAmount);
+                  
+                  // Record the purchase using supabaseAdmin
+                  await supabaseAdmin
+                    .from('credit_purchases')
+                    .insert({
+                      user_id: userId,
+                      amount: creditAmount,
+                      price_id: checkoutSession.line_items?.data?.[0]?.price?.id || checkoutSession.metadata.priceId || 'unknown',
+                    });
+                    
+                  console.log(`Successfully added ${creditAmount} credits to user ${userId}`);
+                } catch (error) {
+                  console.error(`Failed to add credits:`, error);
+                }
+              }
+            }
+            
+            // Handle subscription checkout
             if (checkoutSession.mode === 'subscription' && checkoutSession.subscription) {
               const subscriptionId = typeof checkoutSession.subscription === 'string' 
                 ? checkoutSession.subscription 
@@ -84,7 +117,7 @@ export async function POST(req: Request) {
             break;
           case 'invoice.paid':
           case 'invoice.payment_succeeded':
-            // Fix: Use proper type casting for invoice objects
+            // Handle invoice payment for subscription renewal
             const invoice = event.data.object as any;
             if (invoice && invoice.customer && invoice.subscription) {
               await manageSubscriptionStatusChange(

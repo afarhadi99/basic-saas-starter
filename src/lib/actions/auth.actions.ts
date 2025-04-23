@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { loginSchema, signupSchema, TLoginSchema, TSignupSchema, updateProfileSchema, TUpdateProfileSchema } from '@/lib/validators/auth';
+import { initializeUserCredits } from '@/lib/credits';
 
 export async function login(values: TLoginSchema) {
   // Validate input
@@ -46,7 +47,7 @@ export async function signup(values: TSignupSchema) {
 
   const supabase = await createClient();
   
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -59,6 +60,11 @@ export async function signup(values: TSignupSchema) {
   
   if (error) {
     return { error: error.message };
+  }
+  
+  // Initialize credits for the new user
+  if (data.user) {
+    await initializeUserCredits(data.user.id);
   }
   
   // Check if email confirmation is required

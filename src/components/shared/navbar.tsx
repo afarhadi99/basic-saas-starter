@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from '@/types/db_types';
 import { LogOut, Settings, User as UserIcon } from 'lucide-react';
 import { logout } from '@/lib/actions/auth.actions';
+import { CreditsDisplay } from '@/components/shared/credits-display';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -92,36 +93,41 @@ export function Navbar() {
               </Link>
               
               {!loading && user && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar_url || ''} alt={user.full_name || 'User'} />
-                        <AvatarFallback>{user.full_name?.[0] || 'U'}</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <div className="flex items-center justify-start gap-2 p-2">
-                      <div className="flex flex-col space-y-1 leading-none">
-                        {user.full_name && <p className="font-medium">{user.full_name}</p>}
+                <>
+                  {/* Add credits display */}
+                  <CreditsDisplay />
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={user.avatar_url || ''} alt={user.full_name || 'User'} />
+                          <AvatarFallback>{user.full_name?.[0] || 'U'}</AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <div className="flex items-center justify-start gap-2 p-2">
+                        <div className="flex flex-col space-y-1 leading-none">
+                          {user.full_name && <p className="font-medium">{user.full_name}</p>}
+                        </div>
                       </div>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/account" className="w-full flex justify-between items-center">
-                        Account <Settings className="h-4 w-4" />
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <form action={logout} className="w-full">
-                        <button type="submit" className="w-full flex justify-between items-center">
-                          Logout <LogOut className="h-4 w-4" />
-                        </button>
-                      </form>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/account" className="w-full flex justify-between items-center">
+                          Account <Settings className="h-4 w-4" />
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <form action={logout} className="w-full">
+                          <button type="submit" className="w-full flex justify-between items-center">
+                            Logout <LogOut className="h-4 w-4" />
+                          </button>
+                        </form>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               )}
             </>
           )}

@@ -3,9 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { Database } from '@/types/db_types';
 import { safeToISOString } from '@/lib/utils';
+import { resetSubscriptionCredits } from '@/lib/credits';
+import { getTierByPriceId } from '@/lib/config/pricing';
 
 // Create a Supabase client with the service role key
-const supabaseAdmin = createClient<Database>(
+export const supabaseAdmin = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -146,7 +148,6 @@ export async function deletePriceRecord(priceId: string) {
 }
 
 // Manage subscription status change in the database
-// src/lib/supabase/admin.ts (updated manageSubscriptionStatusChange function)
 export async function manageSubscriptionStatusChange(
   subscriptionId: string,
   customerId: string,
@@ -277,10 +278,20 @@ export async function manageSubscriptionStatusChange(
     }
     console.log(`Subscription ${subscription.id} successfully updated for user ${uuid}`);
 
+    // After subscription is processed, reset subscription credits based on tier
+    if (subscription.status === 'active' || subscription.status === 'trialing') {
+      // Get the product details to determine the tier
+      const { tier } = getTierByPriceId(priceId);
+      
+      if (tier) {
+        console.log(`Resetting credits for user ${uuid} to tier ${tier.id} level`);
+        await resetSubscriptionCredits(uuid, tier.id as 'free' | 'pro' | 'business');
+      }
+    }
+
     return subscription;
   } catch (error) {
     console.error('Error in manageSubscriptionStatusChange:', error);
     throw error;
   }
 }
-
