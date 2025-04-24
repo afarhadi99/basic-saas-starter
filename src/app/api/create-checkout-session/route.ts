@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         },
       },
       success_url: `${getURL()}/account?success=true`,
-      cancel_url: `${getURL()}/pricing`,
+      cancel_url: `${getURL()}/`,
     });
     
     return NextResponse.json({ url: session.url });

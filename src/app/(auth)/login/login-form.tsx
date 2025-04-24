@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import { loginSchema, TLoginSchema } from '@/lib/validators/auth';
 import { login } from '@/lib/actions/auth.actions';
 
@@ -44,38 +45,57 @@ export function LoginForm() {
     }
   }
   
+  const formFields = [
+    { name: "email", label: "Email", placeholder: "you@example.com", type: "email" },
+    { name: "password", label: "Password", placeholder: "••••••••", type: "password" },
+  ];
+  
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="you@example.com" {...field} type="email" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input placeholder="••••••••" {...field} type="password" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Logging in...' : 'Login'}
-        </Button>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {formFields.map((field, i) => (
+          <motion.div
+            key={field.name}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 * i }}
+          >
+            <FormField
+              control={form.control}
+              name={field.name as any}
+              render={({ field: formField }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground/90">
+                    {field.label}
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder={field.placeholder} 
+                      {...formField} 
+                      type={field.type}
+                      className="glass-input bg-white/10 dark:bg-white/5 border-white/20 focus:border-primary/50 transition-all"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </motion.div>
+        ))}
+        
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          <Button 
+            type="submit" 
+            className="w-full bg-gradient-to-r from-primary/90 to-secondary/90 text-white hover:opacity-90 hover:shadow-lg transition-all shadow-md mt-2" 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Logging in...' : 'Login'}
+          </Button>
+        </motion.div>
       </form>
     </Form>
   );

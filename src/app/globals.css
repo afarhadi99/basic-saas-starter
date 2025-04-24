@@ -43,121 +43,121 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Studio Ghibli inspired theme */
+/* Modern glassmorphic theme with our color scheme */
 :root {
-  /* Increased border radius for a softer Ghibli feel */
-  --radius: 0.75rem;
+  /* Increased border radius for a sleeker feel */
+  --radius: 1rem;
   
-  /* Light cream background inspired by Ghibli's pastel backgrounds */
-  --background: oklch(0.97 0.02 95);
-  --foreground: oklch(0.25 0.03 270);
+  /* Background with subtle color */
+  --background: oklch(0.98 0.01 270);
+  --foreground: oklch(0.2 0.02 280);
   
-  /* Card styling with soft background color */
-  --card: oklch(0.98 0.01 90);
-  --card-foreground: oklch(0.25 0.03 270);
+  /* Card styling with glass effect */
+  --card: oklch(0.97 0.01 270 / 0.7);
+  --card-foreground: oklch(0.2 0.02 280);
   
   /* Popover styling */
-  --popover: oklch(0.98 0.01 90);
-  --popover-foreground: oklch(0.25 0.03 270);
+  --popover: oklch(0.97 0.01 270 / 0.8);
+  --popover-foreground: oklch(0.2 0.02 280);
   
-  /* Sky blue primary inspired by "Castle in the Sky" */
-  --primary: oklch(0.65 0.18 230);
-  --primary-foreground: oklch(0.98 0.005 90);
+  /* Purple primary color from #7068F4 */
+  --primary: oklch(0.65 0.2 280);
+  --primary-foreground: oklch(0.99 0.01 0);
   
-  /* Lush green secondary inspired by "My Neighbor Totoro" forests */
-  --secondary: oklch(0.65 0.15 150);
-  --secondary-foreground: oklch(0.98 0.005 90);
+  /* Pink secondary color from #FF64B4 */
+  --secondary: oklch(0.72 0.22 350);
+  --secondary-foreground: oklch(0.99 0.01 0);
   
   /* Muted tones for subtle elements */
-  --muted: oklch(0.93 0.03 95);
-  --muted-foreground: oklch(0.55 0.05 260);
+  --muted: oklch(0.95 0.03 270);
+  --muted-foreground: oklch(0.5 0.05 280);
   
-  /* Warm accent color inspired by "Howl's Moving Castle" fire */
-  --accent: oklch(0.75 0.18 40);
-  --accent-foreground: oklch(0.98 0.005 90);
+  /* Orange accent color from #ffac4c */
+  --accent: oklch(0.8 0.15 60);
+  --accent-foreground: oklch(0.15 0.02 0);
   
   /* Red tone for destructive actions */
   --destructive: oklch(0.65 0.25 25);
-  --destructive-foreground: oklch(0.98 0.005 90);
+  --destructive-foreground: oklch(0.99 0.01 0);
   
   /* Soft borders and inputs */
-  --border: oklch(0.87 0.03 95);
-  --input: oklch(0.87 0.03 95);
-  --ring: oklch(0.70 0.1 230);
+  --border: oklch(0.9 0.02 270 / 0.2);
+  --input: oklch(0.9 0.02 270 / 0.2);
+  --ring: oklch(0.65 0.2 280 / 0.5);
   
-  /* Chart colors inspired by Ghibli color palettes */
-  --chart-1: oklch(0.65 0.18 230); /* Sky blue */
-  --chart-2: oklch(0.65 0.15 150); /* Forest green */
-  --chart-3: oklch(0.75 0.18 40);  /* Warm orange */
-  --chart-4: oklch(0.75 0.15 330); /* Soft pink */
-  --chart-5: oklch(0.60 0.12 60);  /* Golden yellow */
+  /* Chart colors */
+  --chart-1: oklch(0.65 0.2 280); /* Purple - #7068F4 */
+  --chart-2: oklch(0.72 0.22 350); /* Pink - #FF64B4 */
+  --chart-3: oklch(0.8 0.15 60);  /* Orange - #ffac4c */
+  --chart-4: oklch(0.7 0.18 320); /* Magenta */
+  --chart-5: oklch(0.6 0.15 240); /* Blue-purple */
   
   /* Sidebar styling */
-  --sidebar: oklch(0.98 0.01 90);
-  --sidebar-foreground: oklch(0.25 0.03 270);
-  --sidebar-primary: oklch(0.65 0.18 230);
-  --sidebar-primary-foreground: oklch(0.98 0.005 90);
-  --sidebar-accent: oklch(0.75 0.18 40);
-  --sidebar-accent-foreground: oklch(0.98 0.005 90);
-  --sidebar-border: oklch(0.87 0.03 95);
-  --sidebar-ring: oklch(0.70 0.1 230);
+  --sidebar: oklch(0.97 0.01 270 / 0.7);
+  --sidebar-foreground: oklch(0.2 0.02 280);
+  --sidebar-primary: oklch(0.65 0.2 280);
+  --sidebar-primary-foreground: oklch(0.99 0.01 0);
+  --sidebar-accent: oklch(0.8 0.15 60);
+  --sidebar-accent-foreground: oklch(0.15 0.02 0);
+  --sidebar-border: oklch(0.9 0.02 270 / 0.2);
+  --sidebar-ring: oklch(0.65 0.2 280 / 0.5);
 }
 
-/* Dark mode with Ghibli night scenes inspiration */
+/* Dark mode with futuristic tech feel */
 .dark {
-  /* Deeper blues inspired by Ghibli night scenes */
-  --background: oklch(0.18 0.05 260);
-  --foreground: oklch(0.95 0.02 95);
+  /* Deep backgrounds with subtle transparency */
+  --background: oklch(0.15 0.03 280);
+  --foreground: oklch(0.96 0.02 0);
   
-  /* Card styling */
-  --card: oklch(0.25 0.06 255);
-  --card-foreground: oklch(0.95 0.02 95);
+  /* Card styling with glassy effect */
+  --card: oklch(0.2 0.04 280 / 0.6);
+  --card-foreground: oklch(0.96 0.02 0);
   
   /* Popover styling */
-  --popover: oklch(0.25 0.06 255);
-  --popover-foreground: oklch(0.95 0.02 95);
+  --popover: oklch(0.2 0.04 280 / 0.7);
+  --popover-foreground: oklch(0.96 0.02 0);
   
-  /* Lighter blue primary for dark mode */
-  --primary: oklch(0.70 0.18 230); 
-  --primary-foreground: oklch(0.15 0.05 260);
+  /* Brighter purple primary for dark mode - #7068F4 */
+  --primary: oklch(0.7 0.2 280);
+  --primary-foreground: oklch(0.1 0.02 0);
   
-  /* Slightly brighter green for visibility */
-  --secondary: oklch(0.70 0.15 150);
-  --secondary-foreground: oklch(0.98 0.005 90);
+  /* Brighter pink for visibility - #FF64B4 */
+  --secondary: oklch(0.72 0.22 350);
+  --secondary-foreground: oklch(0.1 0.02 0);
   
   /* Dark muted colors */
-  --muted: oklch(0.30 0.04 260);
-  --muted-foreground: oklch(0.75 0.05 240);
+  --muted: oklch(0.25 0.04 280);
+  --muted-foreground: oklch(0.7 0.05 280);
   
-  /* Brighter accent for dark mode visibility */
-  --accent: oklch(0.78 0.20 40);
-  --accent-foreground: oklch(0.15 0.05 260);
+  /* Brighter orange accent for dark mode visibility - #ffac4c */
+  --accent: oklch(0.8 0.15 60);
+  --accent-foreground: oklch(0.1 0.02 0);
   
   /* Brighter destructive for visibility */
   --destructive: oklch(0.75 0.28 25);
-  --destructive-foreground: oklch(0.98 0.005 90);
+  --destructive-foreground: oklch(0.1 0.02 0);
   
-  /* Subtle borders */
-  --border: oklch(1 0 0 / 15%);
-  --input: oklch(1 0 0 / 20%);
-  --ring: oklch(0.65 0.15 230);
+  /* Subtle glowing borders */
+  --border: oklch(0.65 0.15 280 / 0.15);
+  --input: oklch(0.65 0.15 280 / 0.2);
+  --ring: oklch(0.7 0.2 280 / 0.5);
   
-  /* Dark mode chart colors */
-  --chart-1: oklch(0.70 0.20 230); /* Brighter blue */
-  --chart-2: oklch(0.70 0.18 150); /* Brighter green */
-  --chart-3: oklch(0.78 0.20 40);  /* Brighter orange */
-  --chart-4: oklch(0.75 0.18 330); /* Brighter pink */
-  --chart-5: oklch(0.75 0.15 60);  /* Brighter yellow */
+  /* Dark mode chart colors - brighter for contrast */
+  --chart-1: oklch(0.7 0.22 280); /* Brighter purple */
+  --chart-2: oklch(0.75 0.24 350); /* Brighter pink */
+  --chart-3: oklch(0.83 0.17 60);  /* Brighter orange */
+  --chart-4: oklch(0.75 0.2 320); /* Brighter magenta */
+  --chart-5: oklch(0.65 0.18 240); /* Brighter blue-purple */
   
-  /* Dark sidebar */
-  --sidebar: oklch(0.25 0.06 255);
-  --sidebar-foreground: oklch(0.95 0.02 95);
-  --sidebar-primary: oklch(0.70 0.18 230);
-  --sidebar-primary-foreground: oklch(0.98 0.005 90);
-  --sidebar-accent: oklch(0.78 0.20 40);
-  --sidebar-accent-foreground: oklch(0.15 0.05 260);
-  --sidebar-border: oklch(1 0 0 / 15%);
-  --sidebar-ring: oklch(0.65 0.15 230);
+  /* Dark sidebar with glass effect */
+  --sidebar: oklch(0.2 0.04 280 / 0.6);
+  --sidebar-foreground: oklch(0.96 0.02 0);
+  --sidebar-primary: oklch(0.7 0.2 280);
+  --sidebar-primary-foreground: oklch(0.1 0.02 0);
+  --sidebar-accent: oklch(0.8 0.15 60);
+  --sidebar-accent-foreground: oklch(0.1 0.02 0);
+  --sidebar-border: oklch(0.65 0.15 280 / 0.15);
+  --sidebar-ring: oklch(0.7 0.2 280 / 0.5);
 }
 
 @layer base {
@@ -165,10 +165,10 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground bg-gradient-to-br from-primary/5 via-background to-secondary/5;
   }
   
-  /* Ghibli-inspired typography */
+  /* Modern typography */
   h1, h2, h3, h4, h5, h6 {
     @apply font-medium;
   }
@@ -186,37 +186,112 @@
   }
 }
 
-/* Ghibli-inspired utility classes */
+/* Glassmorphic and futuristic design utility classes */
 @layer components {
-  .ghibli-card {
-    @apply rounded-xl bg-white/80 backdrop-blur-sm shadow-lg border border-primary/10;
+  .glass-card {
+    @apply rounded-xl bg-white/20 dark:bg-black/20 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-shadow;
   }
   
-  .ghibli-container {
+  .glass-input {
+    @apply bg-white/10 dark:bg-white/5 backdrop-blur-sm border border-white/20 dark:border-white/10;
+  }
+  
+  .glass-button {
+    @apply backdrop-blur-sm hover:shadow-lg transition-all shadow-md;
+  }
+  
+  .gradient-purple-pink {
+    @apply bg-gradient-to-r from-primary to-secondary text-primary-foreground;
+  }
+  
+  .gradient-pink-orange {
+    @apply bg-gradient-to-r from-secondary to-accent text-secondary-foreground;
+  }
+  
+  .gradient-purple-orange {
+    @apply bg-gradient-to-r from-primary to-accent text-primary-foreground;
+  }
+  
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent;
+  }
+  
+  .gradient-border {
+    @apply border border-transparent bg-gradient-to-r from-primary/30 via-secondary/30 to-accent/30 bg-origin-border;
+    -webkit-mask: 
+      linear-gradient(#fff 0 0) padding-box, 
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  
+  .glass-bg {
+    @apply bg-gradient-to-br from-primary/5 via-background to-secondary/5;
+  }
+  
+  .glass-container {
     @apply container mx-auto px-4 sm:px-6 lg:px-8 py-8;
   }
   
-  /* Use hardcoded colors instead of Tailwind utilities */
-  .ghibli-gradient {
-    @apply bg-gradient-to-br from-[#f8f5e6] via-[#f1f1f1] to-[#e0f2fe];
+  .futuristic-border {
+    @apply border border-white/20 dark:border-white/10 rounded-xl overflow-hidden;
   }
   
-  .ghibli-footer {
-    @apply bg-gradient-to-t from-[#f8f5e6]/80 to-transparent;
+  .glow {
+    @apply relative;
   }
   
-  /* Gentle floating animation inspired by Ghibli's floating elements */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
+  .glow::after {
+    @apply content-[''] absolute -inset-0.5 rounded-[inherit] z-[-1] opacity-75 pointer-events-none blur-md;
+    background: linear-gradient(35deg, #7068F4, transparent, #FF64B4, transparent, #ffac4c);
+    animation: shimmer 10s ease-in-out infinite;
+    background-size: 200% 200%;
+  }
+  
+  .glow-purple::after {
+    background: linear-gradient(35deg, #7068F4, rgba(112, 104, 244, 0.5), transparent);
+  }
+  
+  .glow-pink::after {
+    background: linear-gradient(35deg, #FF64B4, rgba(255, 100, 180, 0.5), transparent);
+  }
+  
+  .glow-orange::after {
+    background: linear-gradient(35deg, #ffac4c, rgba(255, 172, 76, 0.5), transparent);
+  }
+  
+  .interactive-card {
+    @apply transition-all duration-300 hover:translate-y-[-5px] hover:shadow-lg;
+  }
+  
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+  
+  .shimmer::after {
+    @apply content-[''] absolute inset-0 z-10;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.1), 
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
   }
 }
 
-/* Ghibli-inspired floating animation */
+/* Animation keyframes */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }

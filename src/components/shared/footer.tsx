@@ -3,15 +3,15 @@ import Link from 'next/link';
 
 export function Footer() {
   return (
-    <footer className="bg-ghibli-footer py-8 mt-auto">
+    <footer className="py-8 mt-auto bg-gradient-to-t from-primary/5 via-transparent to-transparent backdrop-blur-sm">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
-            <Link href="/" className="text-lg font-semibold">
-            Subscription<span className="text-primary">Starter</span>
+            <Link href="/" className="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">
+              Pixio<span className="font-bold">API</span>
             </Link>
             <p className="text-muted-foreground mt-2 text-sm">
-              Lightweight Supabase and Stripe subscription starter
+              ComfyUI workflows and AI generation made simple
             </p>
           </div>
           
@@ -31,9 +31,9 @@ export function Footer() {
           </div>
         </div>
         
-        <div className="mt-8 pt-4 border-t border-border">
+        <div className="mt-8 pt-4 border-t border-primary/10">
           <p className="text-xs text-center text-muted-foreground">
-            © {new Date().getFullYear()} Alisher Farhadi. All rights reserved.
+            © {new Date().getFullYear()} Pixio API. All rights reserved.
           </p>
         </div>
       </div>

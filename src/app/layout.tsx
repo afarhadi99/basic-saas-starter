@@ -7,8 +7,8 @@ import { Toaster } from 'sonner';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Alisher\'s SaaS Starter',
-  description: 'A magical SaaS platform with clean design and fast loading',
+  title: 'Pixio API Starter',
+  description: 'Unleash AI creativity with ComfyUI workflows for stunning image and video generation',
 };
 
 export default function RootLayout({

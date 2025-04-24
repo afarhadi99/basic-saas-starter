@@ -140,3 +140,20 @@ CREATE TABLE public.generated_media (
 ALTER TABLE public.generated_media ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Can view own media" ON public.generated_media FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Can insert own media" ON public.generated_media FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Ensure proper policies for service role updates
+CREATE POLICY IF NOT EXISTS "Allow service role to update media" 
+  ON public.generated_media 
+  FOR UPDATE 
+  USING (true)
+  WITH CHECK (true);
+
+-- Ensure users can update their own media
+CREATE POLICY IF NOT EXISTS "Can update own media" 
+  ON public.generated_media 
+  FOR UPDATE 
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+      ALTER TABLE public.generated_media
+    ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT NULL;

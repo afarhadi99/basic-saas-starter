@@ -25,8 +25,19 @@ export function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
   
   const isMarketing = pathname === '/' || pathname === '/pricing';
+  
+  // Add scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   useEffect(() => {
     async function getUser() {
@@ -51,33 +62,34 @@ export function Navbar() {
   
   return (
     <nav className={cn(
-      "fixed top-0 left-0 right-0 z-50 py-4",
-      isMarketing ? "bg-transparent" : "bg-background/80 backdrop-blur-md border-b"
+      "fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300",
+      scrolled || !isMarketing 
+        ? "bg-background/80 backdrop-blur-md border-b border-primary/10"
+        : "bg-transparent"
     )}>
       <div className="container flex items-center justify-between mx-auto">
         <Link href="/" className="flex items-center space-x-2">
-          <span className="text-xl font-semibold text-foreground">Subscription<span className="text-primary">Starter</span></span>
+          <span className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">
+            Pixio<span className="font-bold">API</span>
+          </span>
         </Link>
         
         <div className="flex items-center gap-4">
           {isMarketing ? (
             // Marketing navigation
             <>
-              <Link href="/pricing">
-                <Button variant="ghost">Pricing</Button>
-              </Link>
               
               {!loading && user ? (
                 <Link href="/dashboard">
-                  <Button>Dashboard</Button>
+                  <Button className="glass-button gradient-purple-pink">Dashboard</Button>
                 </Link>
               ) : (
                 <>
                   <Link href="/login">
-                    <Button variant="ghost">Login</Button>
+                    <Button variant="ghost" className="hover:bg-primary/10">Login</Button>
                   </Link>
                   <Link href="/signup">
-                    <Button>Sign up</Button>
+                    <Button className="glass-button gradient-purple-pink">Sign up</Button>
                   </Link>
                 </>
               )}
@@ -86,27 +98,24 @@ export function Navbar() {
             // Authenticated navigation
             <>
               <Link href="/dashboard">
-                <Button variant="ghost">Dashboard</Button>
-              </Link>
-              <Link href="/premium">
-                <Button variant="ghost">Premium</Button>
+                <Button variant="ghost" className="hover:bg-primary/10">Dashboard</Button>
               </Link>
               
               {!loading && user && (
                 <>
-                  {/* Add credits display */}
+                  {/* Add credits display with glassmorphic style */}
                   <CreditsDisplay />
                   
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                        <Avatar className="h-8 w-8">
+                      <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-primary/10">
+                        <Avatar className="h-8 w-8 border border-primary/20">
                           <AvatarImage src={user.avatar_url || ''} alt={user.full_name || 'User'} />
-                          <AvatarFallback>{user.full_name?.[0] || 'U'}</AvatarFallback>
+                          <AvatarFallback className="bg-primary/10">{user.full_name?.[0] || 'U'}</AvatarFallback>
                         </Avatar>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="glass-card">
                       <div className="flex items-center justify-start gap-2 p-2">
                         <div className="flex flex-col space-y-1 leading-none">
                           {user.full_name && <p className="font-medium">{user.full_name}</p>}
@@ -114,7 +123,7 @@ export function Navbar() {
                       </div>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href="/account" className="w-full flex justify-between items-center">
+                        <Link href="/account" className="w-full flex justify-between items-center hover:bg-primary/10">
                           Account <Settings className="h-4 w-4" />
                         </Link>
                       </DropdownMenuItem>
