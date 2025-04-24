@@ -2,7 +2,7 @@
 
 A modern SaaS subscription starter template with Next.js, Supabase Auth, Stripe, and AI media generation powered by ComfyUI.
 
-![Subscription Starter Banner](https://img.mytsi.org/i/z8GY981.png)
+![Subscription Starter Banner](https://img.mytsi.org/i/A4j7988.png)
 
 <details>
 <summary>Overview</summary>
@@ -47,54 +47,113 @@ This project leverages modern technologies for a performant and developer-friend
 
 </details>
 
-<details>
-<summary>Getting Started</summary>
+<details open>
+<summary>🚀 Getting Started (For New Forks)</summary>
 
-Follow these steps to set up the project locally:
+This section guides you through setting up the project locally after forking the repository.
 
 ### Prerequisites
 
 - Node.js 18.0.0 or higher
 - npm, yarn, or pnpm
-- A [Supabase](https://supabase.com/) account
+- A [Supabase](https://supabase.io/) account
 - A [Stripe](https://stripe.com/) account
 - A [ComfyDeploy](https://api.myapps.ai/) account (for AI generation)
+- [Stripe CLI](https://stripe.com/docs/stripe-cli) (for local webhook testing)
 
-### Installation
+### 1. Clone and Install
 
-1. Clone the repository:
+1.  Fork the repository on GitHub.
+2.  Clone your forked repository:
 
-```bash
-git clone https://github.com/yourusername/subscription-starter.git
-cd subscription-starter
-```
+    ```bash
+    git clone https://github.your-username.com/yourusername/subscription-starter.git
+    cd subscription-starter
+    ```
+3.  Install dependencies:
 
-2. Install dependencies:
+    ```bash
+    npm install
+    # or
+    yarn install
+    # or
+    pnpm install
+    ```
 
-```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-```
+### 2. Set up Supabase
 
-3. Set up environment variables:
+You'll set up your database, storage, and an Edge Function in the Supabase UI.
 
-Create a `.env.local` file in the root directory and add the following variables. **Replace the placeholder values with your actual keys and URLs.**
+1.  **Create a New Project:**
+    *   Go to the [Supabase Dashboard](https://app.supabase.com/).
+    *   Click "New project".
+    *   Fill in the details and create your project.
+    *   Note your project URL and `anon` key from Project Settings > API.
+    *   Generate a new `service_role` key under Project Settings > API > Project API keys (if one isn't already listed).
+2.  **Set up Database Schema:**
+    *   Go to the SQL Editor (`</>`) in your Supabase project dashboard.
+    *   Run the SQL script provided in the [Database Schema Setup](#database-schema-setup) section below. This creates all necessary tables, enums, and the `handle_new_user` trigger.
+3.  **Create Storage Bucket:**
+    *   Go to Storage in your Supabase project dashboard.
+    *   Click "New bucket".
+    *   Name it `generated-media`.
+    *   Choose **Public** or **Private** (the current code expects **Public** for simplicity in displaying media URLs directly).
+    *   Click "Create bucket".
+4.  **Create Edge Function:**
+    *   Go to Edge Functions in your Supabase project dashboard.
+    *   Click "New Function".
+    *   Name it `generate-media-handler`.
+    *   Choose a region (preferably close to your ComfyDeploy region).
+    *   Click "Create function".
+    *   Go to the function's settings and add a **Secret** named `COMFY_DEPLOY_API_KEY` with your ComfyDeploy API key as the value.
+    *   Copy the code from the `supabase/functions/generate-media-handler/index.ts` block in the [Supabase Edge Function](#supabase-edge-function) section below and paste it into the function editor in the Supabase UI.
+    *   **Important:** Update the `DEPLOYMENT_IDS` object within the function code with your actual ComfyDeploy workflow IDs for image and video generation.
+    *   Deploy the function.
+5.  **Configure Authentication URLs:**
+    *   Go to Authentication > URL Configuration.
+    *   Set **Site URL** to `http://localhost:3000`.
+    *   Add `http://localhost:3000/auth/callback` to the **Redirect URLs**. (Remember to add your production URL here later).
 
-```
+### 3. Set up Stripe
+
+You'll set up your products, prices, and webhooks in the Stripe UI.
+
+1.  **Create Products and Prices:**
+    *   Log in to the [Stripe Dashboard](https://dashboard.stripe.com/).
+    *   Go to Products.
+    *   Create your subscription product tiers (e.g., Pro, Business). For each, add both monthly and yearly **Recurring** prices. Note down the **Price IDs**.
+    *   Create one-time products for your Credit Packs (e.g., "1000 Credits"). For each, add a **One-time** price. Note down the **Price IDs**.
+2.  **Configure Webhook:**
+    *   Go to Developers > Webhooks.
+    *   Click "Add endpoint".
+    *   For local testing, use the Stripe CLI (see step 4 below). Your local webhook URL will look like `http://localhost:3000/api/webhooks/stripe`.
+    *   Select the following events to listen for:
+        *   `product.created`, `product.updated`, `product.deleted`
+        *   `price.created`, `price.updated`, `price.deleted`
+        *   `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+        *   `checkout.session.completed`
+        *   `invoice.paid`, `invoice.payment_succeeded`
+    *   After creating the endpoint, get your **Webhook Signing Secret**.
+3.  **Update Price IDs in Code:**
+    *   Open `src/lib/config/pricing.ts`.
+    *   Update the `STRIPE_PRICE_IDS` object and the `CREDIT_PACKS` array with the actual Price IDs you got from Stripe in step 1.
+
+### 4. Set up Environment Variables (.env.local)
+
+Create a `.env.local` file in the root of your project and add the following variables, using the keys and URLs you obtained from Supabase, Stripe, and ComfyDeploy.
+
+```dotenv
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
 
 # Stripe
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=YOUR_STRIPE_PUBLISHABLE_KEY
+STRIPE_SECRET_KEY=YOUR_STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET=YOUR_STRIPE_WEBHOOK_SIGNING_SECRET
 
-# Stripe Price IDs (from your Stripe Dashboard)
+# Stripe Price IDs (from Stripe Dashboard)
 NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY=price_your_pro_monthly_id
 NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY=price_your_pro_yearly_id
 NEXT_PUBLIC_STRIPE_PRICE_BUSINESS_MONTHLY=price_your_business_monthly_id
@@ -103,15 +162,26 @@ NEXT_PUBLIC_STRIPE_PRICE_CREDIT_PACK_1000=price_your_1000_credits_price_id
 NEXT_PUBLIC_STRIPE_PRICE_CREDIT_PACK_2500=price_your_2500_credits_price_id
 NEXT_PUBLIC_STRIPE_PRICE_CREDIT_PACK_5000=price_your_5000_credits_price_id
 
+# ComfyDeploy API Key (from ComfyDeploy account)
+COMFY_DEPLOY_API_KEY=YOUR_COMFY_DEPLOY_API_KEY
 
-# ComfyDeploy API Key (from your ComfyDeploy account)
-COMFY_DEPLOY_API_KEY=your_comfy_deploy_api_key
-
-# Application URL (important for redirects)
+# Application URL (Important for redirects - use http://localhost:3000 for local)
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-4. Start the development server:
+### 5. Test Local Webhooks (Optional but Recommended)
+
+Use the Stripe CLI to forward events to your local development server:
+
+1.  Make sure the Stripe CLI is installed and logged in (`stripe login`).
+2.  Run the listen command, forwarding to your local webhook route:
+
+    ```bash
+    stripe listen --forward-to http://localhost:3000/api/webhooks/stripe
+    ```
+3.  The CLI will output a webhook signing secret. **This is different from the one in your Stripe dashboard settings.** Update the `STRIPE_WEBHOOK_SECRET` in your `.env.local` file with this local secret while testing locally. Remember to switch it back to your production secret when deploying.
+
+### 6. Run the Development Server
 
 ```bash
 npm run dev
@@ -121,7 +191,7 @@ yarn dev
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser. You should now have the application running locally with authentication, subscription, credit system, and AI generation capabilities connected to your Supabase, Stripe, and ComfyDeploy accounts!
 
 </details>
 
@@ -542,246 +612,6 @@ export default async function BusinessFeaturesPage() {
 </details>
 
 <details>
-<summary>Customizing the UI</summary>
-
-### Editing the Landing Page
-
-To modify the landing page, edit the `src/app/(marketing)/page.tsx` file. This page uses client components and contains the hero section, features section, and call-to-action.
-
-### Customizing the Pricing Page
-
-1. Update pricing tiers and plans in `src/lib/config/pricing.ts`:
-
-```typescript
-export interface PricingTier {
-  id: 'free' | 'pro' | 'business';
-  name: string;
-  description: string;
-  features: string[];
-  popular: boolean;
-  credits: number; // Added credits field
-  // Each tier can have monthly and yearly pricing options
-  pricing: {
-    monthly: {
-      priceId: string | null; // Stripe Price ID
-      amount: number | null;  // Amount in cents
-    };
-    yearly: {
-      priceId: string | null; // Stripe Price ID
-      amount: number | null;  // Amount in cents
-      discount?: number;      // Optional percentage discount compared to monthly
-    };
-  };
-}
-
-// Read price IDs from environment variables
-export const STRIPE_PRICE_IDS = {
-  PRO_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY || '',
-  PRO_YEARLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY || '',
-  BUSINESS_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS_MONTHLY || '',
-  BUSINESS_YEARLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS_YEARLY || '',
-  // Credit pack price IDs
-  CREDIT_PACK_1000: process.env.NEXT_PUBLIC_STRIPE_PRICE_CREDIT_PACK_1000 || '',
-  CREDIT_PACK_2500: process.env.NEXT_PUBLIC_STRIPE_PRICE_CREDIT_PACK_2500 || '',
-  CREDIT_PACK_5000: process.env.NEXT_PUBLIC_STRIPE_PRICE_CREDIT_PACK_5000 || '',
-};
-
-// Define credit packs for purchase
-export const CREDIT_PACKS = [
-  {
-    id: 'credits-1000',
-    name: '1000 Credits',
-    description: 'Top up with a small credit pack',
-    amount: 1000,
-    price: 1000, // $10 in cents
-    priceId: STRIPE_PRICE_IDS.CREDIT_PACK_1000,
-  },
-  {
-    id: 'credits-2500',
-    name: '2500 Credits',
-    description: 'Best value for regular users',
-    amount: 2500,
-    price: 2500, // $25 in cents
-    priceId: STRIPE_PRICE_IDS.CREDIT_PACK_2500,
-  },
-  {
-    id: 'credits-5000',
-    name: '5000 Credits',
-    description: 'Best value for power users',
-    amount: 5000,
-    price: 5000, // $50 in cents
-    priceId: STRIPE_PRICE_IDS.CREDIT_PACK_5000,
-  }
-];
-
-// Check if price IDs are configured
-const isPricingConfigured = () => {
-  return (
-    STRIPE_PRICE_IDS.PRO_MONTHLY &&
-    STRIPE_PRICE_IDS.PRO_YEARLY &&
-    STRIPE_PRICE_IDS.BUSINESS_MONTHLY &&
-    STRIPE_PRICE_IDS.BUSINESS_YEARLY
-  );
-};
-
-// Show warning if price IDs are not configured in production
-if (process.env.NODE_ENV === 'production' && !isPricingConfigured()) {
-  console.warn('Warning: Stripe price IDs are not configured in environment variables.');
-}
-
-export const PRICING_TIERS: PricingTier[] = [
-  {
-    id: 'free',
-    name: 'Free',
-    description: 'Essential features for individuals',
-    credits: 500, // 500 credits for free tier
-    features: [
-      'Basic dashboard access',
-      'Limited access to features',
-      'Community support',
-      '500 credits per month',
-    ],
-    popular: false,
-    pricing: {
-      monthly: {
-        priceId: null,
-        amount: null,
-      },
-      yearly: {
-        priceId: null,
-        amount: null,
-      },
-    },
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    description: 'Perfect for professionals',
-    credits: 3000, // 3000 credits for pro tier
-    features: [
-      'Everything in Free',
-      'Advanced features',
-      'Priority support',
-      'Extended usage limits',
-      '3000 credits per month',
-    ],
-    popular: true,
-    pricing: {
-      monthly: {
-        priceId: STRIPE_PRICE_IDS.PRO_MONTHLY || null,
-        amount: 2900, // $29/month
-      },
-      yearly: {
-        priceId: STRIPE_PRICE_IDS.PRO_YEARLY || null,
-        amount: 29000, // $290/year
-        discount: 16,  // 16% discount compared to monthly
-      },
-    },
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    description: 'For teams and organizations',
-    credits: 6000, // 6000 credits for business tier
-    features: [
-      'Everything in Pro',
-      'Advanced features', // Updated from 'Everything in Pro' for clarity
-      'Dedicated support',
-      'Custom integrations',
-      'Team management',
-      '6000 credits per month',
-    ],
-    popular: false, // Changed to false as Pro is marked popular
-    pricing: {
-      monthly: {
-        priceId: STRIPE_PRICE_IDS.BUSINESS_MONTHLY || null,
-        amount: 5900, // $59/month
-      },
-      yearly: {
-        priceId: STRIPE_PRICE_IDS.BUSINESS_YEARLY || null,
-        amount: 59000, // $590/year
-        discount: 16,  // 16% discount compared to monthly
-      },
-    },
-  },
-];
-
-
-// Helper function to get a tier by ID
-export function getTierById(id: string): PricingTier | undefined {
-  return PRICING_TIERS.find(tier => tier.id === id);
-}
-
-// Build a mapping of price IDs to tier information for easy lookup
-export type PriceIdInfo = {
-  tierId: 'free' | 'pro' | 'business';
-  interval: 'monthly' | 'yearly';
-};
-
-// Create a map of price IDs to tier info
-export const PRICE_ID_MAP: Record<string, PriceIdInfo> = {};
-
-// Populate the price ID map
-PRICING_TIERS.forEach(tier => {
-  // Add monthly price ID if exists
-  if (tier.pricing.monthly.priceId) {
-    PRICE_ID_MAP[tier.pricing.monthly.priceId] = {
-      tierId: tier.id as 'free' | 'pro' | 'business',
-      interval: 'monthly'
-    };
-  }
-
-  // Add yearly price ID if exists
-  if (tier.pricing.yearly.priceId) {
-    PRICE_ID_MAP[tier.pricing.yearly.priceId] = {
-      tierId: tier.id as 'free' | 'pro' | 'business',
-      interval: 'yearly'
-    };
-  }
-});
-
-// Helper function to get tier info from a price ID
-export function getTierByPriceId(priceId: string | null | undefined): { 
-  tier: PricingTier | undefined, 
-  interval: 'monthly' | 'yearly' | undefined 
-} {
-  if (!priceId) {
-    // Default to free tier with no interval
-    const freeTier = getTierById('free');
-    return { tier: freeTier, interval: undefined };
-  }
-
-  const priceInfo = PRICE_ID_MAP[priceId];
-
-  if (!priceInfo) {
-    // Price ID not found in our configuration
-    return { tier: undefined, interval: undefined };
-  }
-
-  const tier = getTierById(priceInfo.tierId);
-
-  return { 
-    tier,
-    interval: priceInfo.interval
-  };
-}
-```
-
-2. Ensure you update the `STRIPE_PRICE_IDS` in the same file with your actual Stripe price IDs.
-
-3. The pricing page itself is in `src/app/(marketing)/pricing/page.tsx` and uses the client component `PricingClient` which you can customize.
-
-### Modifying the Dashboard
-
-Edit `src/app/(app)/dashboard/page.tsx` and the components within `src/components/dashboard` (`media-generation-form.tsx`, `media-library.tsx`) to change the dashboard layout, add new cards, or modify existing components. These files have been significantly updated in the previous steps to match the glassmorphic theme.
-
-### Modifying the Account Page
-
-Edit `src/app/(app)/account/page.tsx` and the components within `src/components/account` (`update-profile-form.tsx`, `manage-subscription-button.tsx`, `credit-pack-card.tsx`) to change the account page layout and styling. These files have been significantly updated in the previous steps to match the glassmorphic theme.
-
-</details>
-
-<details>
 <summary>Setting up Supabase</summary>
 
 ### 1. Create a Supabase Project
@@ -983,7 +813,8 @@ This project uses a Supabase Edge Function to handle the asynchronous communicat
 8. Click the "Link to GitHub" button to connect it to your repository (recommended for easier deployment updates).
 9. Add the `COMFY_DEPLOY_API_KEY` as a **Secret** in the function's settings. Go to the "Secrets" tab and add a new secret with the key `COMFY_DEPLOY_API_KEY` and the value from your `.env.local`.
 10. Copy the code from `supabase/functions/generate-media-handler/index.ts` (provided in the code block below) into the function editor in the Supabase UI.
-11. Deploy the function.
+11. **Important:** Update the `DEPLOYMENT_IDS` object within the function code with your actual ComfyDeploy workflow IDs for image and video generation.
+12. Deploy the function.
 
 ```typescript
 // supabase/functions/generate-media-handler/index.ts
@@ -1365,11 +1196,11 @@ serve(async (req) => {
 2. Go to Products > Add Product
 3. Create your product tiers (e.g., Free, Pro, Business)
 4. For each **paid** product, add pricing plans:
-   - Create both monthly and yearly plans if needed.
+   - Create both monthly and yearly **Recurring** prices.
    - Set the appropriate prices.
    - Note the **Price IDs** (e.g., `price_1234567890`) for each plan.
 5. Create **one-time** products for your Credit Packs (e.g., "1000 Credits").
-6. For each Credit Pack product, add a **one-time** price.
+6. For each Credit Pack product, add a **One-time** price.
 7. Note the **Price IDs** for each credit pack.
 
 ### 2. Configure Stripe Webhook
@@ -1377,7 +1208,7 @@ serve(async (req) => {
 1. In Stripe Dashboard, go to Developers > Webhooks
 2. Add an endpoint with your webhook URL:
    - For production: `https://your-domain.com/api/webhooks/stripe`
-   - For local development, use Stripe CLI (see below).
+   - For local development, use Stripe CLI (see step 4 below in Getting Started).
 3. Select events to listen for:
    - `product.created`, `product.updated`, `product.deleted`
    - `price.created`, `price.updated`, `price.deleted`
@@ -1392,6 +1223,28 @@ Open `src/lib/config/pricing.ts` and update the `STRIPE_PRICE_IDS` and `CREDIT_P
 
 ```typescript
 // src/lib/config/pricing.ts
+export interface PricingTier {
+  id: 'free' | 'pro' | 'business';
+  name: string;
+  description: string;
+  features: string[];
+  popular: boolean;
+  credits: number; // Added credits field
+  // Each tier can have monthly and yearly pricing options
+  pricing: {
+    monthly: {
+      priceId: string | null; // Stripe Price ID
+      amount: number | null;  // Amount in cents
+    };
+    yearly: {
+      priceId: string | null; // Stripe Price ID
+      amount: number | null;  // Amount in cents
+      discount?: number;      // Optional percentage discount compared to monthly
+    };
+  };
+}
+
+// Read price IDs from environment variables
 export const STRIPE_PRICE_IDS = {
   PRO_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY || '',
   PRO_YEARLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY || '',
@@ -1416,23 +1269,170 @@ export const CREDIT_PACKS = [
   // ... other credit packs
 ];
 
-// ... PRICING_TIERS definition (ensure 'credits' field is set for each tier)
+// Check if price IDs are configured
+const isPricingConfigured = () => {
+  return (
+    STRIPE_PRICE_IDS.PRO_MONTHLY &&
+    STRIPE_PRICE_IDS.PRO_YEARLY &&
+    STRIPE_PRICE_IDS.BUSINESS_MONTHLY &&
+    STRIPE_PRICE_IDS.BUSINESS_YEARLY
+  );
+};
+
+// Show warning if price IDs are not configured in production
+if (process.env.NODE_ENV === 'production' && !isPricingConfigured()) {
+  console.warn('Warning: Stripe price IDs are not configured in environment variables.');
+}
+
+export const PRICING_TIERS: PricingTier[] = [
+  {
+    id: 'free',
+    name: 'Free',
+    description: 'Essential features for individuals',
+    credits: 500, // 500 credits for free tier
+    features: [
+      'Basic dashboard access',
+      'Limited access to features',
+      'Community support',
+      '500 credits per month',
+    ],
+    popular: false,
+    pricing: {
+      monthly: {
+        priceId: null,
+        amount: null,
+      },
+      yearly: {
+        priceId: null,
+        amount: null,
+      },
+    },
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    description: 'Perfect for professionals',
+    credits: 3000, // 3000 credits for pro tier
+    features: [
+      'Everything in Free',
+      'Advanced features',
+      'Priority support',
+      'Extended usage limits',
+      '3000 credits per month',
+    ],
+    popular: true,
+    pricing: {
+      monthly: {
+        priceId: STRIPE_PRICE_IDS.PRO_MONTHLY || null,
+        amount: 2900, // $29/month
+      },
+      yearly: {
+        priceId: STRIPE_PRICE_IDS.PRO_YEARLY || null,
+        amount: 29000, // $290/year
+        discount: 16,  // 16% discount compared to monthly
+      },
+    },
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    description: 'For teams and organizations',
+    credits: 6000, // 6000 credits for business tier
+    features: [
+      'Everything in Pro',
+      'Advanced features', // Updated from 'Everything in Pro' for clarity
+      'Dedicated support',
+      'Custom integrations',
+      'Team management',
+      '6000 credits per month',
+    ],
+    popular: false, // Changed to false as Pro is marked popular
+    pricing: {
+      monthly: {
+        priceId: STRIPE_PRICE_IDS.BUSINESS_MONTHLY || null,
+        amount: 5900, // $59/month
+      },
+      yearly: {
+        priceId: STRIPE_PRICE_IDS.BUSINESS_YEARLY || null,
+        amount: 59000, // $590/year
+        discount: 16,  // 16% discount compared to monthly
+      },
+    },
+  },
+];
+
+
+// Helper function to get a tier by ID
+export function getTierById(id: string): PricingTier | undefined {
+  return PRICING_TIERS.find(tier => tier.id === id);
+}
+
+// Build a mapping of price IDs to tier information for easy lookup
+export type PriceIdInfo = {
+  tierId: 'free' | 'pro' | 'business';
+  interval: 'monthly' | 'yearly';
+};
+
+// Create a map of price IDs to tier info
+export const PRICE_ID_MAP: Record<string, PriceIdInfo> = {};
+
+// Populate the price ID map
+PRICING_TIERS.forEach(tier => {
+  // Add monthly price ID if exists
+  if (tier.pricing.monthly.priceId) {
+    PRICE_ID_MAP[tier.pricing.monthly.priceId] = {
+      tierId: tier.id as 'free' | 'pro' | 'business',
+      interval: 'monthly'
+    };
+  }
+
+  // Add yearly price ID if exists
+  if (tier.pricing.yearly.priceId) {
+    PRICE_ID_MAP[tier.pricing.yearly.priceId] = {
+      tierId: tier.id as 'free' | 'pro' | 'business',
+      interval: 'yearly'
+    };
+  }
+});
+
+// Helper function to get tier info from a price ID
+export function getTierByPriceId(priceId: string | null | undefined): { 
+  tier: PricingTier | undefined, 
+  interval: 'monthly' | 'yearly' | undefined 
+} {
+  if (!priceId) {
+    // Default to free tier with no interval
+    const freeTier = getTierById('free');
+    return { tier: freeTier, interval: undefined };
+  }
+
+  const priceInfo = PRICE_ID_MAP[priceId];
+
+  if (!priceInfo) {
+    // Price ID not found in our configuration
+    return { tier: undefined, interval: undefined };
+  }
+
+  const tier = getTierById(priceInfo.tierId);
+
+  return { 
+    tier,
+    interval: priceInfo.interval
+  };
+}
 ```
 
-### 4. Local Development with Stripe CLI
+2. Ensure you update the `STRIPE_PRICE_IDS` in the same file with your actual Stripe price IDs.
 
-To test webhooks locally:
+3. The pricing page itself is in `src/app/(marketing)/pricing/page.tsx` and uses the client component `PricingClient` which you can customize.
 
-1. Install [Stripe CLI](https://stripe.com/docs/stripe-cli)
-2. Log in:
-   ```bash
-   stripe login
-   ```
-3. Forward webhooks to your local server:
-   ```bash
-   stripe listen --forward-to http://localhost:3000/api/webhooks/stripe
-   ```
-4. The CLI will output a webhook signing secret. Add this to your `.env.local` file as `STRIPE_WEBHOOK_SECRET`.
+### Modifying the Dashboard
+
+Edit `src/app/(app)/dashboard/page.tsx` and the components within `src/components/dashboard` (`media-generation-form.tsx`, `media-library.tsx`) to change the dashboard layout, add new cards, or modify existing components. These files have been significantly updated in the previous steps to match the glassmorphic theme.
+
+### Modifying the Account Page
+
+Edit `src/app/(app)/account/page.tsx` and the components within `src/components/account` (`update-profile-form.tsx`, `manage-subscription-button.tsx`, `credit-pack-card.tsx`) to change the account page layout and styling. These files have been significantly updated in the previous steps to match the glassmorphic theme.
 
 </details>
 
@@ -1452,7 +1452,7 @@ This project includes a robust credit system that allows users to consume credit
 
 ### Setting Up the Credit System
 
-Setup involves adding fields and tables to your database schema (covered in [Database Schema Setup](#2-database-schema-setup)) and configuring credit amounts in `src/lib/config/pricing.ts` (covered in [Update Price IDs in Config](#3-update-price-ids-in-config)).
+Setup involves adding fields and tables to your database schema (covered in [Database Schema Setup](#database-schema-setup)) and configuring credit amounts in `src/lib/config/pricing.ts` (covered in [Update Price IDs in Config](#update-price-ids-in-config)).
 
 ### Using the Credit System
 
@@ -1592,88 +1592,390 @@ To fully integrate a new modality (e.g., 'audio'):
 
     ```typescript
     // Inside supabase/functions/generate-media-handler/index.ts
-    // ... other imports and setup ...
+    import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { corsHeaders } from '../_shared/cors.ts'; // Assuming you have a _shared folder with cors.ts
+
+    // Define your ComfyDeploy Deployment IDs here
+    const DEPLOYMENT_IDS = {
+      image: '8f96cb86-5cbb-4ad0-9837-8a79eeb5103a', // Replace with your Image Deployment ID
+      video: 'd07cf1d5-412c-4270-b925-ffd6416abd1c'  // Replace with your Video Deployment ID
+      // Add other modalities here
+    };
+
+    // Utility to delay execution
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     serve(async (req) => {
-        // ... auth and input validation ...
+      // Handle CORS preflight request
+      if (req.method === 'OPTIONS') {
+        return new Response('ok', {
+          headers: corsHeaders,
+        });
+      }
+
+      let mediaId = null; // Keep track of mediaId for error handling
+
+      try {
+        // --- Authentication & Input Validation ---
+        // Create a Supabase client with the user's JWT to check authentication
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+          {
+            global: {
+              headers: { Authorization: req.headers.get('Authorization') },
+            },
+          }
+        );
+
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+        if (authError || !user) {
+          console.error('Auth error:', authError);
+          return new Response(
+            JSON.stringify({ error: 'Unauthorized' }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 401,
+            }
+          );
+        }
+        const userId = user.id;
 
         const body = await req.json();
-        const { prompt, mediaType, mediaId } = body; // mediaType will now include 'audio' etc.
+        const { prompt, mediaType } = body;
+        mediaId = body.mediaId; // Assign mediaId here
 
-        // ... check if mediaType is in DEPLOYMENT_IDS ...
+        if (!prompt || !mediaType || !mediaId || !Object.keys(DEPLOYMENT_IDS).includes(mediaType)) {
+          return new Response(
+            JSON.stringify({ error: 'Missing or invalid parameters' }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400,
+            }
+          );
+        }
+        console.log(`Function received: userId=${userId}, mediaId=${mediaId}, type=${mediaType}`);
+
+        // Create a Supabase client with the Service Role Key for admin operations (e.g., updating DB status, Storage)
+        const supabaseAdmin = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        // --- Update Status to Processing ---
+        // Ensure record exists and belongs to the user before proceeding
+        const { error: initialUpdateError } = await supabaseAdmin
+          .from('generated_media')
+          .update({ status: 'processing' })
+          .eq('id', mediaId)
+          .eq('user_id', userId); // Ensure we only update the correct user's record
+
+        if (initialUpdateError) {
+          console.error(`Error updating initial status for mediaId ${mediaId}:`, initialUpdateError);
+          // This is critical, the record might not exist or belong to the user
+          throw new Error(`Failed to set initial processing status: ${initialUpdateError.message}`);
+        }
+        console.log(`Media record ${mediaId} status set to processing.`);
+
 
         // --- Trigger ComfyUI API ---
-        const deploymentId = DEPLOYMENT_IDS[mediaType]; // This will now correctly pick the new ID
+        const deploymentId = DEPLOYMENT_IDS[mediaType];
+        const comfyApiKey = Deno.env.get('COMFY_DEPLOY_API_KEY');
 
-        // ... fetch call to ComfyDeploy API ...
-
-        // --- Polling and Handling Final Status ---
-        // ... polling logic ...
-
-        if (currentStatus === 'success' || currentStatus === 'complete') {
-            // Adjust file extension and content type based on the new mediaType
-            let fileExtension;
-            let contentType;
-            switch(mediaType) {
-                case 'image':
-                    fileExtension = '.png';
-                    contentType = 'image/png';
-                    break;
-                case 'video':
-                    fileExtension = '.webp'; // Or '.mp4', etc. depending on workflow output
-                    contentType = 'video/webm'; // Or 'video/mp4'
-                    break;
-                case 'audio':
-                    fileExtension = '.mp3'; // Or '.wav', etc.
-                    contentType = 'audio/mpeg'; // Or 'audio/wav'
-                    break;
-                // Add cases for your new modalities
-                default:
-                    fileExtension = '.bin';
-                    contentType = 'application/octet-stream';
-            }
-
-            // Assuming ComfyDeploy output URL structure is consistent
-            const remoteMediaUrl = finalOutput.outputs[0].url; // Verify this structure for your workflow
-
-            // ... download and upload to storage ...
-
-            // Update the media record
-            const { error: finalUpdateError } = await supabaseAdmin
-              .from('generated_media')
-              .update({
-                status: 'completed',
-                media_url: publicUrlData.publicUrl,
-                storage_path: storagePath,
-                metadata: {
-                  ...finalOutput?.metadata || {},
-                  run_id,
-                  original_url: remoteMediaUrl,
-                  file_size: mediaBuffer.byteLength,
-                  completed_at: new Date().toISOString(),
-                }
-              })
-              .eq('id', mediaId);
-
-            // ... error handling ...
-
-        } else {
-            // ... handle failed status update ...
+        if (!comfyApiKey) {
+          throw new Error("COMFY_DEPLOY_API_KEY environment variable not set.");
         }
 
-        // ... return response ...
+        const triggerResponse = await fetch("https://api.myapps.ai/api/run", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${comfyApiKey}`,
+          },
+          body: JSON.stringify({
+            deployment_id: deploymentId,
+            inputs: {
+              "prompt": prompt,
+              // Add other inputs required by your workflow here
+            },
+          }),
+        });
 
-    } catch (error: any) {
-        // ... error handling and status update ...
-    }
-    // ... return error response ...
+        if (!triggerResponse.ok) {
+          const errorBody = await triggerResponse.text();
+          console.error(`ComfyUI trigger failed: ${triggerResponse.status} ${triggerResponse.statusText}`, errorBody);
+          throw new Error(`ComfyUI trigger failed: ${triggerResponse.statusText}`);
+        }
+
+        const triggerResult = await triggerResponse.json();
+        const run_id = triggerResult.run_id;
+
+        if (!run_id) {
+          throw new Error('ComfyUI did not return a run_id');
+        }
+        console.log(`ComfyUI run started: ${run_id}`);
+
+        // Update DB with run_id and set status to processing (again, for safety)
+        const { error: runIdUpdateError } = await supabaseAdmin
+          .from('generated_media')
+          .update({
+            status: 'processing', // Ensure status is 'processing'
+            metadata: { run_id: run_id } // Store the run_id
+          })
+          .eq('id', mediaId);
+
+        if (runIdUpdateError) {
+          console.error(`Error updating record ${mediaId} with run_id ${run_id}:`, runIdUpdateError);
+          // Continue processing, but log the error
+        }
+
+
+        // --- Polling for Result ---
+        let currentStatus = 'processing'; // Start polling with the expected initial status
+        let finalOutput = null;
+        const maxAttempts = 90; // ~15 minutes timeout (90 * 10s)
+        let attempts = 0;
+        let consecutiveApiErrors = 0;
+        const maxConsecutiveApiErrors = 10; // Give up polling if API fails 10 times in a row
+
+        while (['processing', 'not-started', 'running', 'uploading', 'queued'].includes(currentStatus) && attempts < maxAttempts) {
+          attempts++;
+          console.log(`Polling attempt ${attempts}/${maxAttempts} for run ${run_id}. Current status: ${currentStatus}`);
+          await delay(10000); // Wait 10 seconds between polls
+
+          try {
+            const statusResponse = await fetch(`https://api.myapps.ai/api/run?run_id=${run_id}`, {
+              method: "GET",
+              headers: {
+                "Authorization": `Bearer ${comfyApiKey}`,
+              },
+            });
+
+            if (!statusResponse.ok) {
+              consecutiveApiErrors++;
+              console.error(`Polling API failed (attempt ${attempts}, consecutive errors ${consecutiveApiErrors}): ${statusResponse.status} ${statusResponse.statusText}`);
+              if (consecutiveApiErrors >= maxConsecutiveApiErrors) {
+                currentStatus = 'failed'; // Mark as failed if API is consistently unavailable
+                finalOutput = { error: `Polling API failed ${maxConsecutiveApiErrors} consecutive times.` };
+                break; // Exit loop
+              }
+              continue; // Skip to next attempt if within error threshold
+            }
+
+            // Reset consecutive error count on success
+            consecutiveApiErrors = 0;
+
+            finalOutput = await statusResponse.json();
+            currentStatus = finalOutput.status || 'unknown'; // Default to 'unknown' if status is missing
+            console.log(`Status received for run ${run_id}: ${currentStatus}`);
+
+            // Exit loop immediately if successful or failed
+            if (currentStatus === 'success' || currentStatus === 'complete' || currentStatus === 'failed') {
+              break;
+            }
+
+          } catch (pollError: any) {
+            consecutiveApiErrors++;
+            console.error(`Network error during polling attempt ${attempts} (consecutive errors ${consecutiveApiErrors}):`, pollError.message);
+            if (consecutiveApiErrors >= maxConsecutiveApiErrors) {
+              currentStatus = 'failed'; // Mark as failed after too many network errors
+              finalOutput = { error: `Polling network error ${maxConsecutiveApiErrors} consecutive times: ${pollError.message}` };
+              break; // Exit loop
+            }
+            // Continue polling if within error threshold
+          }
+        } // End of while loop
+
+        // --- Handle Final Status ---
+        console.log(`Polling finished after ${attempts} attempts. Final status: ${currentStatus}`);
+
+        if (currentStatus === 'success' || currentStatus === 'complete') {
+          // Check if output files exist in the response
+          if (!finalOutput?.outputs || finalOutput.outputs.length === 0 || !finalOutput.outputs[0].url) {
+             console.error(`ComfyUI run ${run_id} reported success but no output URL found.`);
+             currentStatus = 'failed'; // Treat as failed if no output URL
+             finalOutput = { error: 'Generation reported success but no output file was produced.' };
+          }
+        }
+
+
+        if (currentStatus === 'success' || currentStatus === 'complete') {
+          // Assuming the first output is the main media file
+          const remoteMediaUrl = finalOutput.outputs[0].url;
+          let fileExtension;
+          let contentType;
+
+          // Determine file extension and content type based on media type
+          switch(mediaType) {
+              case 'image':
+                  fileExtension = '.png'; // Or whatever your workflow outputs
+                  contentType = 'image/png';
+                  break;
+              case 'video':
+                  fileExtension = '.webp'; // Or '.mp4', etc.
+                  contentType = 'video/webm'; // Or 'video/mp4'
+                  break;
+              case 'audio':
+                  fileExtension = '.mp3'; // Or '.wav', etc.
+                  contentType = 'audio/mpeg'; // Or 'audio/wav'
+                  break;
+              // Add cases for your new modalities
+              default:
+                  fileExtension = '.bin';
+                  contentType = 'application/octet-stream';
+          }
+
+
+          console.log(`Downloading generated ${mediaRecord.media_type} from: ${remoteMediaUrl}`);
+
+          // Download the media from ComfyDeploy's CDN
+          const mediaResponse = await fetch(remoteMediaUrl, {
+            method: 'GET',
+            headers: {
+              'Cache-Control': 'no-cache', // Ensure fresh download
+              'Pragma': 'no-cache'
+            }
+          });
+
+          if (!mediaResponse.ok) {
+            console.error(`Failed to download media: ${mediaResponse.status} ${mediaResponse.statusText}`);
+            throw new Error(`Failed to download media: ${mediaResponse.statusText}`);
+          }
+
+          const mediaBuffer = await mediaResponse.arrayBuffer();
+          const contentSize = mediaBuffer.byteLength;
+          console.log(`Downloaded media size: ${(contentSize / 1024).toFixed(2)} KB`);
+
+          if (contentSize === 0) {
+            throw new Error('Downloaded file is empty');
+          }
+
+          // Generate a unique filename and storage path
+          const timestamp = Date.now();
+          const fileName = `${timestamp}-${mediaId.substring(0, 8)}${fileExtension}`;
+          const storagePath = `${userId}/${mediaType}s/${fileName}`; // e.g., user_id/images/timestamp-id.png
+
+          console.log(`Uploading to Supabase storage path: ${storagePath}`);
+
+
+          // Upload to Supabase storage
+          const { data: uploadData, error: uploadError } = await supabaseAdmin
+            .storage
+            .from('generated-media') // Your storage bucket name
+            .upload(storagePath, mediaBuffer, {
+              contentType,
+              upsert: true, // Overwrite if a file with the same name exists (less likely with timestamp)
+              cacheControl: '3600' // Cache for 1 hour
+            });
+
+          if (uploadError) {
+            console.error('Storage upload error:', uploadError);
+            throw new Error(`Storage upload error: ${uploadError.message}`);
+          }
+          console.log(`Successfully uploaded to storage: ${uploadData?.path}`);
+
+          // Get public URL
+          const { data: publicUrlData } = supabaseAdmin
+            .storage
+            .from('generated-media') // Your storage bucket name
+            .getPublicUrl(storagePath);
+
+          // Update the media record in the database with final status, URL, and path
+          const { error: finalUpdateError } = await supabaseAdmin
+            .from('generated_media')
+            .update({
+              status: 'completed',
+              media_url: publicUrlData.publicUrl,
+              storage_path: storagePath,
+              metadata: {
+                ...finalOutput?.metadata || {}, // Keep existing metadata
+                run_id,
+                original_url: remoteMediaUrl, // Store the original ComfyDeploy URL
+                file_size: mediaBuffer.byteLength,
+                completed_at: new Date().toISOString(),
+              }
+            })
+            .eq('id', mediaId); // Update the specific record
+
+          if (finalUpdateError) {
+            console.error(`Failed to update final record ${mediaId}:`, finalUpdateError);
+            // Log error but function technically succeeded in generating and uploading
+          } else {
+            console.log(`Media ${mediaId} completed successfully and record updated.`);
+          }
+
+        } else {
+          // Generation failed or timed out
+          const errorMessage = currentStatus === 'failed' ? finalOutput?.error || 'Generation failed' : attempts >= maxAttempts ? 'Generation timed out' : `Generation stopped with unexpected status: ${currentStatus}`;
+          console.error(`Generation failed or timed out for run ${run_id}: ${errorMessage}`);
+
+          // Update the record to mark as failed
+          const { error: failUpdateError } = await supabaseAdmin
+            .from('generated_media')
+            .update({
+              status: 'failed',
+              metadata: {
+                ...finalOutput?.metadata || {}, // Keep existing metadata
+                run_id,
+                error: errorMessage,
+                final_api_status: currentStatus,
+                failed_at: new Date().toISOString(),
+              }
+            })
+            .eq('id', mediaId); // Update the specific record
+
+          if (failUpdateError) {
+            console.error(`Failed to update record ${mediaId} to failed status:`, failUpdateError);
+          } else {
+             console.log(`Media ${mediaId} marked as failed.`);
+          }
+        }
+
+        // --- Return Success (Function execution completed, background task finished) ---
+        // The function returns success if it finished processing the request,
+        // regardless of whether the generation itself succeeded or failed.
+        return new Response(
+          JSON.stringify({ success: true, finalStatus: currentStatus }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          }
+        );
+
+      } catch (error: any) {
+        console.error('Supabase Function Error:', error.message);
+
+        // Attempt to update DB record to failed if possible and mediaId is known
+        if (mediaId) {
+          try {
+            const supabaseAdmin = createClient(
+              Deno.env.get('SUPABASE_URL') ?? '',
+              Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            );
+            await supabaseAdmin
+              .from('generated_media')
+              .update({
+                status: 'failed',
+                metadata: { error: `Function error: ${error.message}` },
+              })
+              .eq('id', mediaId);
+              console.log(`Media ${mediaId} status updated to failed due to function error.`);
+          } catch (updateError) {
+            console.error(`Failed to update status to failed on error for mediaId ${mediaId}:`, updateError);
+          }
+        }
+
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          }
+        );
+      }
     });
     ```
-4.  **Update Dashboard UI**:
-    *   Modify the `TabsList` in `src/app/(app)/dashboard/page.tsx` to include a new `TabsTrigger` for the new modality.
-    *   Add a new `TabsContent` section for the new modality, rendering a `MediaGenerationForm` instance configured for that type.
-    *   Update the `MediaLibrary` component (`src/components/dashboard/media-library.tsx`) to include the new modality in its filter tabs (`TabsList`, `TabsTrigger`).
-    *   Update the `MediaCard` component (`src/components/dashboard/media-library.tsx`) to handle displaying the new media type (e.g., use an `<audio>` or `<video>` tag instead of `<img>` based on `item.media_type`). You might need a dedicated component for each media type display.
 
 </details>
 
@@ -1690,18 +1992,9 @@ Key styling concepts used:
 
 - **Utility Classes:** Classes like `flex`, `grid`, `p-4`, `text-lg`, `font-bold`, `bg-primary`, `text-white`, `rounded-md`, `shadow-lg`, `transition`, `duration-300`, `hover:opacity-90`, `dark:bg-black/50`, `backdrop-blur-md`.
 - **Custom Colors:** Defined in `tailwind.config.ts` and used via classes like `bg-primary`, `text-secondary`, `border-accent/20`.
-- **Custom Utility Classes:** Defined in `src/app/globals.css` using `@layer components` for reusable styles like `glass-card`, `glass-input`, `glass-button`, `gradient-text`.
+- **Custom Utility Classes:** Defined in `src/app/globals.css` using `@layer components` for reusable styles like `glass-card`, `glass-input`, `glass-button`.
 - **CSS Variables:** Used in `src/app/globals.css` (`:root`, `.dark`) to define the color palette and other theme values, which are then referenced by Tailwind classes or direct CSS. This allows for easy theme switching (light/dark mode).
 - **Animations:** Custom keyframes (`@keyframes`) and Tailwind animation classes (`animation-*`) are defined in `tailwind.config.ts` and used for subtle effects like floating elements, gradient movement, and pulse.
-
-### Global CSS (`src/app/globals.css`)
-
-This file contains:
-
-- Tailwind directives (`@import "tailwindcss";`, `@import "tw-animate-css";`).
-- Custom CSS variables for the color theme and other design tokens.
-- Base styles (`@layer base`) for general typography and body background.
-- Custom component classes (`@layer components`) like `.glass-card` that combine multiple Tailwind utilities and CSS variables for complex styles (e.g., background color with alpha, backdrop blur, border, shadow).
 
 **Example Custom Component Class (`.glass-card`)**:
 
