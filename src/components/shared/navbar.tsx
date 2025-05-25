@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from '@/types/db_types';
-import { LogOut, Settings, User as UserIcon, Home, Crown, DollarSign, BarChart3, MessageCircle } from 'lucide-react';
+import { LogOut, Settings, User as UserIcon, Home, Crown, DollarSign, BarChart3 } from 'lucide-react';
 import { logout } from '@/lib/actions/auth.actions';
 
 interface NavItem {
@@ -72,7 +72,6 @@ export function Navbar() {
   useEffect(() => {
     if (pathname === '/') setActiveTab('Home');
     else if (pathname === '/pricing') setActiveTab('Pricing');
-    else if (pathname === '/chat') setActiveTab('NBA Chat');
     else if (pathname === '/dashboard') setActiveTab('Dashboard');
     else if (pathname === '/premium') setActiveTab('Premium');
   }, [pathname]);
@@ -82,13 +81,11 @@ export function Navbar() {
     if (isMarketing) {
       return [
         { name: 'Home', url: '/', icon: Home },
-        { name: 'NBA Chat', url: '/chat', icon: MessageCircle },
         { name: 'Pricing', url: '/pricing', icon: DollarSign },
       ];
     } else {
       return [
         { name: 'Dashboard', url: '/dashboard', icon: BarChart3 },
-        { name: 'NBA Chat', url: '/chat', icon: MessageCircle },
         { name: 'Premium', url: '/premium', icon: Crown },
       ];
     }
@@ -153,6 +150,7 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-3">
           <div className="relative">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center">
+
               <Image 
                 src="/logo.png"
                 alt="Betting Buddy Logo"

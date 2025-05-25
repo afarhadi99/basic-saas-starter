@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useState, useRef } from 'react';
 import { Users } from 'lucide-react'
 import { GlowingEffect } from '@/components/ui/glowing-effect'; // Adjust path as needed
+// Add this import at the top with your other imports
+import { NBAChatbot } from '@/components/nba-chatbot';
+
 
 
 // Animated Counter Component - Fixed TypeScript errors
@@ -1102,6 +1105,9 @@ export default function BettingBuddyLandingPage() {
         </div>
       </section>
 
+{/* Add NBA Chatbot - floating button */}
+      <NBAChatbot />
+      
       {/* CSS Styles for Cyberpunk Effects + 3D Basketball + Flip Cards + Animated Numbers */}
       <style jsx>{`
         /* ANIMATED COUNTER STYLES */
